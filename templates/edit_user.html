@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Edit User - E-waste Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-user-edit me-2"></i>Edit User</h2>
+                <a href="{{ url_for('users') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Users
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-edit me-2"></i>Edit User Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">
+                                        <i class="fas fa-user me-1"></i>Username <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="username" name="username" 
+                                           value="{{ user.username }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">
+                                        <i class="fas fa-envelope me-1"></i>Email <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="email" class="form-control" id="email" name="email" 
+                                           value="{{ user.email }}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="full_name" class="form-label">
+                                        <i class="fas fa-id-card me-1"></i>Full Name <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="full_name" name="full_name" 
+                                           value="{{ user.full_name }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="phone" class="form-label">
+                                        <i class="fas fa-phone me-1"></i>Phone Number
+                                    </label>
+                                    <input type="tel" class="form-control" id="phone" name="phone" 
+                                           value="{{ user.phone or '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="role" class="form-label">
+                                        <i class="fas fa-user-tag me-1"></i>Role <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="role" name="role" required>
+                                        <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Administrator</option>
+                                        <option value="collector" {% if user.role == 'collector' %}selected{% endif %}>Collector</option>
+                                        <option value="barangay" {% if user.role == 'barangay' %}selected{% endif %}>Barangay User</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">
+                                        <i class="fas fa-lock me-1"></i>New Password
+                                        <small class="text-muted">(Leave blank to keep current password)</small>
+                                    </label>
+                                    <input type="password" class="form-control" id="password" name="password" 
+                                           placeholder="Enter new password">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-info-circle me-1"></i>Account Information
+                                    </label>
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <small class="text-muted">Created:</small><br>
+                                                    <strong>{{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</strong>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <small class="text-muted">Last Updated:</small><br>
+                                                    <strong>{{ user.updated_at.strftime('%Y-%m-%d %H:%M') if user.updated_at else 'Never' }}</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('users') }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Update User
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.querySelector('form');
+    const usernameInput = document.getElementById('username');
+    const emailInput = document.getElementById('email');
+    const fullNameInput = document.getElementById('full_name');
+    const roleSelect = document.getElementById('role');
+    
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Clear previous error states
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        document.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+        
+        // Validate username
+        if (usernameInput.value.trim().length < 3) {
+            showError(usernameInput, 'Username must be at least 3 characters long');
+            isValid = false;
+        }
+        
+        // Validate email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(emailInput.value)) {
+            showError(emailInput, 'Please enter a valid email address');
+            isValid = false;
+        }
+        
+        // Validate full name
+        if (fullNameInput.value.trim().length < 2) {
+            showError(fullNameInput, 'Full name must be at least 2 characters long');
+            isValid = false;
+        }
+        
+        // Validate role
+        if (!roleSelect.value) {
+            showError(roleSelect, 'Please select a role');
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+        }
+    });
+    
+    function showError(input, message) {
+        input.classList.add('is-invalid');
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'invalid-feedback';
+        errorDiv.textContent = message;
+        input.parentNode.appendChild(errorDiv);
+    }
+});
+</script>
+{% endblock %}

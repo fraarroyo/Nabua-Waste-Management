@@ -737,6 +737,55 @@ def delete_waste_item(item_id):
     
     return redirect(url_for('index'))
 
+@app.route('/edit_user/<int:user_id>', methods=['GET', 'POST'])
+@admin_required
+def edit_user(user_id):
+    """Edit user account"""
+    user = User.query.get_or_404(user_id)
+    
+    if request.method == 'POST':
+        # Get form data
+        username = request.form['username']
+        email = request.form['email']
+        full_name = request.form['full_name']
+        phone = request.form['phone']
+        role = request.form['role']
+        password = request.form.get('password', '')  # Optional password change
+        
+        # Check if username is already taken by another user
+        existing_user = User.query.filter(User.username == username, User.id != user_id).first()
+        if existing_user:
+            flash('Username already exists!', 'error')
+            return render_template('edit_user.html', user=user)
+        
+        # Check if email is already taken by another user
+        existing_email = User.query.filter(User.email == email, User.id != user_id).first()
+        if existing_email:
+            flash('Email already exists!', 'error')
+            return render_template('edit_user.html', user=user)
+        
+        try:
+            # Update user information
+            user.username = username
+            user.email = email
+            user.full_name = full_name
+            user.phone = phone
+            user.role = role
+            
+            # Update password if provided
+            if password:
+                user.set_password(password)
+            
+            db.session.commit()
+            flash(f'User "{user.username}" updated successfully!', 'success')
+            return redirect(url_for('users'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating user: {str(e)}', 'error')
+    
+    return render_template('edit_user.html', user=user)
+
 def create_default_users():
     """Create default admin and collector accounts if they don't exist"""
     # Check if admin user already exists
