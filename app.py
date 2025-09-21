@@ -672,6 +672,68 @@ def api_items():
         'created_at': item.created_at.isoformat()
     } for item in items])
 
+@app.route('/delete_user/<int:user_id>', methods=['POST'])
+@admin_required
+def delete_user(user_id):
+    """Delete a user account"""
+    user = User.query.get_or_404(user_id)
+    
+    # Prevent deleting the current user
+    if user.id == session.get('user_id'):
+        flash('You cannot delete your own account!', 'error')
+        return redirect(url_for('users'))
+    
+    # Prevent deleting the main admin account
+    if user.username == 'admin':
+        flash('Cannot delete the main admin account!', 'error')
+        return redirect(url_for('users'))
+    
+    try:
+        # Delete associated waste items created by this user
+        waste_items = WasteItem.query.filter_by(created_by=user.id).all()
+        for item in waste_items:
+            # Delete associated tracking records
+            WasteTracking.query.filter_by(waste_item_id=item.id).delete()
+            db.session.delete(item)
+        
+        # Delete the user
+        db.session.delete(user)
+        db.session.commit()
+        
+        flash(f'User "{user.username}" has been deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting user: {str(e)}', 'error')
+    
+    return redirect(url_for('users'))
+
+@app.route('/delete_waste_item/<item_id>', methods=['POST'])
+@login_required
+def delete_waste_item(item_id):
+    """Delete a waste item"""
+    item = WasteItem.query.filter_by(item_id=item_id).first_or_404()
+    
+    # Only allow admin or the creator to delete
+    current_user = User.query.get(session.get('user_id'))
+    if current_user.role != 'admin' and item.created_by != current_user.id:
+        flash('You do not have permission to delete this item!', 'error')
+        return redirect(url_for('index'))
+    
+    try:
+        # Delete associated tracking records
+        WasteTracking.query.filter_by(waste_item_id=item.id).delete()
+        
+        # Delete the waste item
+        db.session.delete(item)
+        db.session.commit()
+        
+        flash(f'Waste item "{item.item_name}" has been deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting waste item: {str(e)}', 'error')
+    
+    return redirect(url_for('index'))
+
 def create_default_users():
     """Create default admin and collector accounts if they don't exist"""
     # Check if admin user already exists
