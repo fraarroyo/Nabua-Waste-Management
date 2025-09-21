@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Collection Status - Waste Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-map-marker-alt me-2"></i>Collection Status by Barangay
+                </h4>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Monitor waste collection progress across all barangays in the municipality</p>
+                
+                {% if barangay_collections %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Barangay</th>
+                                    <th>Total Items</th>
+                                    <th>Pending Collection</th>
+                                    <th>Collected</th>
+                                    <th>Processed</th>
+                                    <th>Collection Rate</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for barangay in barangay_collections %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ barangay.name }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ barangay.total_items }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning">{{ barangay.pending }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">{{ barangay.collected }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ barangay.processed }}</span>
+                                    </td>
+                                    <td>
+                                        {% set collection_rate = ((barangay.collected + barangay.processed) / barangay.total_items * 100) if barangay.total_items > 0 else 0 %}
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ collection_rate }}%" aria-valuenow="{{ collection_rate }}" aria-valuemin="0" aria-valuemax="100">
+                                                {{ "%.1f"|format(collection_rate) }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if barangay.pending == 0 %}
+                                            <span class="badge bg-success">Complete</span>
+                                        {% elif barangay.pending <= barangay.total_items * 0.2 %}
+                                            <span class="badge bg-warning">Almost Complete</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Needs Attention</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>No collection data available yet.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Statistics -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h3>{{ barangay_collections|sum(attribute='total_items') }}</h3>
+                <p class="mb-0">Total Items</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h3>{{ barangay_collections|sum(attribute='pending') }}</h3>
+                <p class="mb-0">Pending Collection</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h3>{{ barangay_collections|sum(attribute='collected') }}</h3>
+                <p class="mb-0">Collected</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h3>{{ barangay_collections|sum(attribute='processed') }}</h3>
+                <p class="mb-0">Processed</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Barangay Performance Chart -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Collection Performance by Barangay
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if barangay_collections %}
+                    <canvas id="collectionChart" width="400" height="200"></canvas>
+                {% else %}
+                    <p class="text-muted">No data available for chart</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    {% if barangay_collections %}
+    const ctx = document.getElementById('collectionChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [{% for barangay in barangay_collections %}'{{ barangay.name }}'{% if not loop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Collected',
+                data: [{% for barangay in barangay_collections %}{{ barangay.collected }}{% if not loop.last %},{% endif %}{% endfor %}],
+                backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                borderColor: 'rgba(40, 167, 69, 1)',
+                borderWidth: 1
+            }, {
+                label: 'Pending',
+                data: [{% for barangay in barangay_collections %}{{ barangay.pending }}{% if not loop.last %},{% endif %}{% endfor %}],
+                backgroundColor: 'rgba(255, 193, 7, 0.8)',
+                borderColor: 'rgba(255, 193, 7, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    {% endif %}
+</script>
+{% endblock %}

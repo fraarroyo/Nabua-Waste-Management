@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+
+{% block title %}Add Waste Item - Waste Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <!-- Header Section -->
+            <div class="text-center mb-5">
+                <h1 class="display-5 fw-bold text-dark mb-3">
+                    <i class="fas fa-plus-circle me-3 text-primary"></i>Register Waste for Collection
+                </h1>
+                <p class="lead text-muted">Register new waste items for collection and tracking</p>
+            </div>
+            
+            <!-- Main Form Card -->
+            <div class="card border-0 shadow-lg">
+                <div class="card-header bg-gradient-primary text-white text-center py-4">
+                    <h4 class="mb-0 fw-bold">
+                        <i class="fas fa-recycle me-2"></i>Waste Registration Form
+                    </h4>
+                    <p class="mb-0 mt-2 opacity-75">Fill in the details below to register a new waste item</p>
+                </div>
+                <div class="card-body p-5">
+                    <form method="POST" id="wasteForm">
+                        <!-- Waste Type Selection -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label for="waste_type" class="form-label fw-bold text-dark mb-3">
+                                    <i class="fas fa-trash me-2 text-primary"></i>Waste Type *
+                                </label>
+                                <select class="form-select form-select-lg" id="waste_type" name="waste_type" required>
+                                    <option value="">Choose the type of waste...</option>
+                                    <option value="recyclable">♻️ Recyclable</option>
+                                    <option value="hazardous">⚠️ Hazardous</option>
+                                    <option value="organic">🌱 Organic</option>
+                                    <option value="electronic">💻 Electronic</option>
+                                    <option value="medical">🏥 Medical</option>
+                                    <option value="other">❓ Other</option>
+                                </select>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Select the appropriate category for your waste item
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Location Selection -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="municipality_id" class="form-label fw-bold text-dark mb-3">
+                                    <i class="fas fa-building me-2 text-primary"></i>Municipality/City *
+                                </label>
+                                <select class="form-select form-select-lg" id="municipality_id" name="municipality_id" required>
+                                    <option value="">Choose your municipality...</option>
+                                    {% for municipality in municipalities %}
+                                    <option value="{{ municipality.id }}">{{ municipality.name }}, {{ municipality.province }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    Select your municipality or city
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="barangay_id" class="form-label fw-bold text-dark mb-3">
+                                    <i class="fas fa-home me-2 text-primary"></i>Barangay *
+                                </label>
+                                <select class="form-select form-select-lg" id="barangay_id" name="barangay_id" required disabled>
+                                    <option value="">Select municipality first</option>
+                                </select>
+                                <div class="form-text">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="sync-barangays" style="display: none;">
+                                        <i class="fas fa-sync me-1"></i>Sync Barangays
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Weight and Quantity -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="weight" class="form-label fw-bold text-dark mb-3">
+                                    <i class="fas fa-weight me-2 text-primary"></i>Weight (kg)
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control form-control-lg" id="weight" name="weight" 
+                                           step="0.01" min="0" placeholder="0.00">
+                                    <span class="input-group-text bg-light">kg</span>
+                                </div>
+                                <div class="form-text">
+                                    <i class="fas fa-balance-scale me-1"></i>
+                                    Enter the weight in kilograms (optional)
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="quantity" class="form-label fw-bold text-dark mb-3">
+                                    <i class="fas fa-hashtag me-2 text-primary"></i>Quantity
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control form-control-lg" id="quantity" name="quantity" 
+                                           min="1" placeholder="1">
+                                    <span class="input-group-text bg-light">items</span>
+                                </div>
+                                <div class="form-text">
+                                    <i class="fas fa-cubes me-1"></i>
+                                    Number of items (default: 1)
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Address -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label for="address" class="form-label fw-bold text-dark mb-3">
+                                    <i class="fas fa-map-marker-alt me-2 text-primary"></i>Collection Address *
+                                </label>
+                                <textarea class="form-control form-control-lg" id="address" name="address" rows="3" 
+                                          placeholder="Enter the specific address where the waste should be collected..." required></textarea>
+                                <div class="form-text">
+                                    <i class="fas fa-home me-1"></i>
+                                    Provide detailed address for collection team
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Description -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label for="description" class="form-label fw-bold text-dark mb-3">
+                                    <i class="fas fa-align-left me-2 text-primary"></i>Description
+                                </label>
+                                <textarea class="form-control form-control-lg" id="description" name="description" rows="3" 
+                                          placeholder="Additional details about the waste item (optional)..."></textarea>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Any additional information about the waste item
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Buttons -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-lg px-4 me-md-2">
+                                        <i class="fas fa-arrow-left me-2"></i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary btn-lg px-5" id="submitBtn">
+                                        <span class="btn-text">
+                                            <i class="fas fa-save me-2"></i>Register Waste Item
+                                        </span>
+                                        <span class="loading d-none">
+                                            <div class="loading"></div>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Information Card -->
+            <div class="card mt-4 border-0 shadow-sm">
+                <div class="card-header bg-info text-white text-center py-3">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="fas fa-info-circle me-2"></i>Registration Information
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center p-3">
+                                <i class="fas fa-qrcode fa-2x text-primary mb-2"></i>
+                                <h6 class="fw-bold">QR Code Generated</h6>
+                                <p class="small text-muted mb-0">A unique QR code will be created for tracking</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center p-3">
+                                <i class="fas fa-truck fa-2x text-info mb-2"></i>
+                                <h6 class="fw-bold">Collection Scheduled</h6>
+                                <p class="small text-muted mb-0">Collection team will be notified automatically</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center p-3">
+                                <i class="fas fa-chart-line fa-2x text-warning mb-2"></i>
+                                <h6 class="fw-bold">Track Progress</h6>
+                                <p class="small text-muted mb-0">Monitor collection status in real-time</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient-primary {
+    background: var(--gradient-primary) !important;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+    transform: translateY(-2px);
+}
+
+.form-control-lg, .form-select-lg {
+    padding: 0.75rem 1rem;
+    font-size: 1.1rem;
+}
+
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const municipalitySelect = document.getElementById('municipality_id');
+    const barangaySelect = document.getElementById('barangay_id');
+    const syncBtn = document.getElementById('sync-barangays');
+    const form = document.getElementById('wasteForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = submitBtn.querySelector('.btn-text');
+    const loading = submitBtn.querySelector('.loading');
+
+    // Municipality change handler
+    municipalitySelect.addEventListener('change', function() {
+        const municipalityId = this.value;
+        
+        if (municipalityId) {
+            barangaySelect.disabled = false;
+            barangaySelect.innerHTML = '<option value="">Loading barangays...</option>';
+            
+            fetch(`/api/barangays/${municipalityId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        barangaySelect.innerHTML = '<option value="">Select barangay</option>';
+                        data.barangays.forEach(barangay => {
+                            const option = document.createElement('option');
+                            option.value = barangay.id;
+                            option.textContent = barangay.name;
+                            barangaySelect.appendChild(option);
+                        });
+                    } else {
+                        barangaySelect.innerHTML = '<option value="">No barangays found</option>';
+                        syncBtn.style.display = 'inline-block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading barangays:', error);
+                    barangaySelect.innerHTML = '<option value="">Error loading barangays</option>';
+                    syncBtn.style.display = 'inline-block';
+                });
+        } else {
+            barangaySelect.disabled = true;
+            barangaySelect.innerHTML = '<option value="">Select municipality first</option>';
+            syncBtn.style.display = 'none';
+        }
+    });
+
+    // Sync barangays handler
+    syncBtn.addEventListener('click', function() {
+        const municipalityId = municipalitySelect.value;
+        if (municipalityId) {
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Syncing...';
+            this.disabled = true;
+            
+            fetch(`/api/sync-barangays/${municipalityId}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        barangaySelect.innerHTML = '<option value="">Select barangay</option>';
+                        data.barangays.forEach(barangay => {
+                            const option = document.createElement('option');
+                            option.value = barangay.id;
+                            option.textContent = barangay.name;
+                            barangaySelect.appendChild(option);
+                        });
+                        this.style.display = 'none';
+                    } else {
+                        alert('Failed to sync barangays: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error syncing barangays:', error);
+                    alert('Error syncing barangays. Please try again.');
+                })
+                .finally(() => {
+                    this.innerHTML = '<i class="fas fa-sync me-1"></i>Sync Barangays';
+                    this.disabled = false;
+                });
+        }
+    });
+
+    // Form submission handler
+    form.addEventListener('submit', function() {
+        btnText.classList.add('d-none');
+        loading.classList.remove('d-none');
+        submitBtn.disabled = true;
+    });
+
+    // Add visual feedback to form fields
+    const formFields = document.querySelectorAll('.form-control, .form-select');
+    formFields.forEach(field => {
+        field.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+        
+        field.addEventListener('blur', function() {
+            this.parentElement.classList.remove('focused');
+        });
+    });
+});
+</script>
+{% endblock %}

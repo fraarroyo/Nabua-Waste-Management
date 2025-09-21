@@ -1,0 +1,445 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Waste Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-4 fw-bold text-dark mb-2">
+                        <i class="fas fa-tachometer-alt me-3 text-primary"></i>Dashboard
+                    </h1>
+                    <p class="lead text-muted">Monitor and manage waste collection across all barangays</p>
+                </div>
+                <div class="d-flex gap-3">
+                    <a href="{{ url_for('add_waste') }}" class="btn btn-primary btn-lg px-4">
+                        <i class="fas fa-plus me-2"></i>Add Waste Item
+                    </a>
+                    <a href="{{ url_for('collection_team') }}" class="btn btn-info btn-lg px-4">
+                        <i class="fas fa-truck me-2"></i>Collection Team
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-5">
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="card border-0 shadow-lg h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <div class="bg-primary bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-trash fa-2x text-white"></i>
+                        </div>
+                    </div>
+                    <h2 class="fw-bold text-dark mb-1">{{ total_waste_items }}</h2>
+                    <p class="text-muted mb-0 fw-semibold">Total Items</p>
+                    <small class="text-primary">
+                        <i class="fas fa-arrow-up me-1"></i>All time
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="card border-0 shadow-lg h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <div class="bg-warning bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-clock fa-2x text-white"></i>
+                        </div>
+                    </div>
+                    <h2 class="fw-bold text-dark mb-1">{{ pending_collection }}</h2>
+                    <p class="text-muted mb-0 fw-semibold">Pending</p>
+                    <small class="text-warning">
+                        <i class="fas fa-exclamation-triangle me-1"></i>Awaiting collection
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="card border-0 shadow-lg h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <div class="bg-info bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-check-circle fa-2x text-white"></i>
+                        </div>
+                    </div>
+                    <h2 class="fw-bold text-dark mb-1">{{ collected }}</h2>
+                    <p class="text-muted mb-0 fw-semibold">Collected</p>
+                    <small class="text-info">
+                        <i class="fas fa-truck me-1"></i>Picked up
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="card border-0 shadow-lg h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <div class="bg-secondary bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-truck fa-2x text-white"></i>
+                        </div>
+                    </div>
+                    <h2 class="fw-bold text-dark mb-1">{{ in_transit }}</h2>
+                    <p class="text-muted mb-0 fw-semibold">In Transit</p>
+                    <small class="text-secondary">
+                        <i class="fas fa-route me-1"></i>On the way
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="card border-0 shadow-lg h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <div class="bg-info bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-cogs fa-2x text-white"></i>
+                        </div>
+                    </div>
+                    <h2 class="fw-bold text-dark mb-1">{{ processed }}</h2>
+                    <p class="text-muted mb-0 fw-semibold">Processed</p>
+                    <small class="text-info">
+                        <i class="fas fa-check me-1"></i>Completed
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="card border-0 shadow-lg h-100">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <div class="bg-secondary bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-recycle fa-2x text-white"></i>
+                        </div>
+                    </div>
+                    <h2 class="fw-bold text-dark mb-1">{{ disposed }}</h2>
+                    <p class="text-muted mb-0 fw-semibold">Disposed</p>
+                    <small class="text-secondary">
+                        <i class="fas fa-leaf me-1"></i>Final stage
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts and Analytics Section -->
+    <div class="row mb-5">
+        <!-- Waste Type Statistics -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-lg h-100">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-chart-pie me-2"></i>Waste Type Distribution
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    {% if waste_type_stats %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="fw-semibold">Waste Type</th>
+                                        <th class="fw-semibold text-center">Count</th>
+                                        <th class="fw-semibold text-center">Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for stat in waste_type_stats %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="waste-type-indicator me-3
+                                                    {% if stat.waste_type == 'recyclable' %}bg-info
+                                                    {% elif stat.waste_type == 'hazardous' %}bg-danger
+                                                    {% elif stat.waste_type == 'organic' %}bg-success
+                                                    {% elif stat.waste_type == 'electronic' %}bg-dark
+                                                    {% elif stat.waste_type == 'medical' %}bg-warning
+                                                    {% else %}bg-secondary{% endif %}">
+                                                </div>
+                                                <span class="fw-semibold">{{ stat.waste_type.replace('_', ' ').title() }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-light text-dark fs-6">{{ stat.count }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            {% if total_waste_items > 0 %}
+                                                {% set percentage = (stat.count / total_waste_items) * 100 %}
+                                                <div class="d-flex align-items-center justify-content-center">
+                                                    <div class="progress me-2" style="width: 60px; height: 8px;">
+                                                        <div class="progress-bar 
+                                                            {% if stat.waste_type == 'recyclable' %}bg-info
+                                                            {% elif stat.waste_type == 'hazardous' %}bg-danger
+                                                            {% elif stat.waste_type == 'organic' %}bg-success
+                                                            {% elif stat.waste_type == 'electronic' %}bg-dark
+                                                            {% elif stat.waste_type == 'medical' %}bg-warning
+                                                            {% else %}bg-secondary{% endif %}" 
+                                                            style="width: {{ percentage }}%">
+                                                        </div>
+                                                    </div>
+                                                    <span class="fw-bold">{{ "%.1f"|format(percentage) }}%</span>
+                                                </div>
+                                            {% else %}
+                                                <span class="text-muted">0%</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">No waste items registered yet</h6>
+                            <p class="text-muted small">Start by adding some waste items to see the distribution</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    <!-- Barangay Statistics -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Barangay Statistics</h5>
+            </div>
+            <div class="card-body">
+                {% if barangay_stats %}
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Barangay</th>
+                                    <th>Total</th>
+                                    <th>Pending</th>
+                                    <th>Progress</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in barangay_stats %}
+                                <tr>
+                                    <td>{{ stat.name }}</td>
+                                    <td>{{ stat.total_items }}</td>
+                                    <td>{{ stat.pending_items }}</td>
+                                    <td>
+                                        {% if stat.total_items > 0 %}
+                                            {% set progress = ((stat.total_items - stat.pending_items) / stat.total_items) * 100 %}
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar 
+                                                    {% if progress == 100 %}bg-success
+                                                    {% elif progress >= 50 %}bg-warning
+                                                    {% else %}bg-danger{% endif %}" 
+                                                    style="width: {{ progress }}%">
+                                                    {{ "%.0f"|format(progress) }}%
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">No items</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">No barangay data available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Waste Items -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Waste Items</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Item ID</th>
+                                    <th>Item Name</th>
+                                    <th>Waste Type</th>
+                                    <th>Status</th>
+                                    <th>Barangay</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in recent_items %}
+                                <tr>
+                                    <td><code>{{ item.item_id }}</code></td>
+                                    <td>{{ item.item_name }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if item.waste_type == 'recyclable' %}bg-info
+                                            {% elif item.waste_type == 'hazardous' %}bg-danger
+                                            {% elif item.waste_type == 'organic' %}bg-success
+                                            {% elif item.waste_type == 'electronic' %}bg-dark
+                                            {% elif item.waste_type == 'medical' %}bg-warning text-dark
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ item.waste_type.replace('_', ' ').title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if item.status == 'pending_collection' %}bg-warning text-dark
+                                            {% elif item.status == 'collected' %}bg-primary
+                                            {% elif item.status == 'in_transit' %}bg-info
+                                            {% elif item.status == 'processed' %}bg-success
+                                            {% elif item.status == 'disposed' %}bg-dark
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ item.status.replace('_', ' ').title() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ item.barangay.name if item.barangay else 'N/A' }}</td>
+                                    <td>{{ item.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('view_item', item_id=item.item_id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('generate_qr', item_id=item.item_id) }}" class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-qrcode"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">No waste items registered yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('add_waste') }}" class="btn btn-primary w-100">
+                            <i class="fas fa-plus me-2"></i>Register Waste
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('scan_qr') }}" class="btn btn-info w-100">
+                            <i class="fas fa-qrcode me-2"></i>Scan QR Code
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('collection_team') }}" class="btn btn-warning w-100">
+                            <i class="fas fa-truck me-2"></i>Collection Team
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('collection_status') }}" class="btn btn-info w-100">
+                            <i class="fas fa-chart-bar me-2"></i>Collection Status
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<style>
+.waste-type-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.bg-gradient-primary {
+    background: var(--gradient-primary) !important;
+}
+
+.bg-gradient-success {
+    background: var(--gradient-success) !important;
+}
+
+.bg-gradient-warning {
+    background: var(--gradient-warning) !important;
+}
+
+.bg-gradient-info {
+    background: var(--gradient-info) !important;
+}
+
+.quick-action-card {
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.quick-action-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--secondary-color);
+    box-shadow: 0 15px 35px rgba(52, 152, 219, 0.2);
+}
+
+.stats-card {
+    transition: all 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-3px);
+}
+
+.progress {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    border-radius: 10px;
+    transition: width 0.6s ease;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add animation to stats cards
+    const statsCards = document.querySelectorAll('.card');
+    statsCards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+    });
+    
+    // Animate progress bars on load
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.width = width;
+        }, 500);
+    });
+});
+</script>
+{% endblock %}

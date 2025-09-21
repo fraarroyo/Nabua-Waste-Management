@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Waste Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron text-white p-5 rounded mb-4" style="background: var(--gradient-primary);">
+            <h1 class="display-4">
+                <i class="fas fa-recycle me-3"></i>Municipal Waste Management System
+            </h1>
+            <p class="lead">Track and manage waste collection across barangays with QR code technology</p>
+            <hr class="my-4">
+            <p>Monitor waste collection status, track items by barangay, and ensure efficient waste disposal across the municipality.</p>
+            <a class="btn btn-light btn-lg" href="{{ url_for('add_waste') }}" role="button">
+                <i class="fas fa-plus me-2"></i>Register Waste Item
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-tachometer-alt fa-3x text-info mb-3"></i>
+                <h5 class="card-title">Dashboard</h5>
+                <p class="card-text">View comprehensive statistics and analytics</p>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-info">View Dashboard</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-plus-circle fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Register Waste</h5>
+                <p class="card-text">Register new waste items by barangay</p>
+                <a href="{{ url_for('add_waste') }}" class="btn btn-primary">Register Item</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-truck fa-3x text-warning mb-3"></i>
+                <h5 class="card-title">Collection Team</h5>
+                <p class="card-text">View pending collections by barangay</p>
+                <a href="{{ url_for('collection_team') }}" class="btn btn-warning">View Collections</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-map-marker-alt fa-3x text-info mb-3"></i>
+                <h5 class="card-title">Collection Status</h5>
+                <p class="card-text">Monitor collection status by barangay</p>
+                <a href="{{ url_for('collection_status') }}" class="btn btn-info">View Status</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-chart-bar fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Dashboard</h5>
+                <p class="card-text">View municipal waste analytics</p>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary">View Dashboard</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ total_waste_items }}</h4>
+                        <p class="mb-0">Total Items</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-trash fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ pending_collection }}</h4>
+                        <p class="mb-0">Pending Collection</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white" style="background: var(--gradient-info);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ collected_today }}</h4>
+                        <p class="mb-0">Collected Today</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ barangay_stats|length }}</h4>
+                        <p class="mb-0">Active Barangays</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-building fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <h3>Recent Waste Items</h3>
+        {% if waste_items %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Item ID</th>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Location</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in waste_items %}
+                        <tr>
+                            <td><code>{{ item.item_id }}</code></td>
+                            <td>{{ item.item_name }}</td>
+                            <td>
+                                <span class="badge waste-type-badge bg-{{ 'primary' if item.waste_type == 'recyclable' else 'danger' if item.waste_type == 'hazardous' else 'success' if item.waste_type == 'organic' else 'secondary' }}">
+                                    {{ item.waste_type.title() }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge status-badge bg-{{ 'success' if item.status == 'collected' else 'warning' if item.status == 'in_transit' else 'info' if item.status == 'processed' else 'dark' }}">
+                                    {{ item.status.replace('_', ' ').title() }}
+                                </span>
+                            </td>
+                            <td>{{ item.location or 'N/A' }}</td>
+                            <td>{{ item.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <a href="{{ url_for('view_item', item_id=item.item_id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('generate_qr', item_id=item.item_id) }}" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-qrcode"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>No waste items found. <a href="{{ url_for('add_waste') }}">Add your first waste item</a> to get started.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

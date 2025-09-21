@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Collection Team - Waste Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-truck me-2"></i>Collection Team Dashboard
+                </h4>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">View and manage pending waste collections by barangay</p>
+                
+                {% if pending_collections %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Item ID</th>
+                                    <th>Item Name</th>
+                                    <th>Barangay</th>
+                                    <th>Address</th>
+                                    <th>Contact</th>
+                                    <th>Waste Type</th>
+                                    <th>Weight</th>
+                                    <th>Registered</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in pending_collections %}
+                                <tr>
+                                    <td><code>{{ item.item_id }}</code></td>
+                                    <td>{{ item.item_name }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ item.barangay.name }}</span>
+                                    </td>
+                                    <td>{{ item.address }}</td>
+                                    <td>
+                                        {% if item.contact_person %}
+                                            <div class="small">
+                                                <strong>{{ item.contact_person }}</strong><br>
+                                                {% if item.contact_number %}
+                                                    <i class="fas fa-phone me-1"></i>{{ item.contact_number }}
+                                                {% endif %}
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">No contact info</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge waste-type-badge bg-{{ 'primary' if item.waste_type == 'recyclable' else 'danger' if item.waste_type == 'hazardous' else 'success' if item.waste_type == 'organic' else 'secondary' }}">
+                                            {{ item.waste_type.title() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ item.weight or 'N/A' }} kg</td>
+                                    <td>{{ item.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('mark_collected', item_id=item.item_id) }}" class="d-inline">
+                                            <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Mark this item as collected?')">
+                                                <i class="fas fa-check me-1"></i>Mark Collected
+                                            </button>
+                                        </form>
+                                        <a href="{{ url_for('view_item', item_id=item.item_id) }}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>No pending collections! All waste items have been collected.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Collection Statistics -->
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h3>{{ pending_collections|length }}</h3>
+                <p class="mb-0">Pending Collections</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h3>{{ pending_collections|groupby('barangay.name')|list|length }}</h3>
+                <p class="mb-0">Barangays with Pending Items</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h3>{{ pending_collections|selectattr('waste_type', 'equalto', 'hazardous')|list|length }}</h3>
+                <p class="mb-0">Hazardous Items</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
