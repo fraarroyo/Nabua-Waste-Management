@@ -248,12 +248,12 @@ document.addEventListener('DOMContentLoaded', function() {
             barangaySelect.disabled = false;
             barangaySelect.innerHTML = '<option value="">Loading barangays...</option>';
             
-            fetch(`/api/barangays/${municipalityId}`)
+            fetch(`/api/municipalities/${municipalityId}/barangays`)
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success) {
+                    if (data && data.length > 0) {
                         barangaySelect.innerHTML = '<option value="">Select barangay</option>';
-                        data.barangays.forEach(barangay => {
+                        data.forEach(barangay => {
                             const option = document.createElement('option');
                             option.value = barangay.id;
                             option.textContent = barangay.name;
@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', function() {
             this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Syncing...';
             this.disabled = true;
             
-            fetch(`/api/sync-barangays/${municipalityId}`, { method: 'POST' })
+            fetch(`/api/municipalities/${municipalityId}/barangays/sync`, { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
