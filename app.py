@@ -146,6 +146,7 @@ class WasteItem(db.Model):
     status = db.Column(db.String(50), default='pending_collection')  # pending_collection, collected, in_transit, processed, disposed
     barangay_id = db.Column(db.Integer, db.ForeignKey('barangay.id'), nullable=False)
     collection_route_id = db.Column(db.Integer, db.ForeignKey('collection_route.id'), nullable=True)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Track who created the item
     address = db.Column(db.String(200), nullable=True)
     contact_person = db.Column(db.String(100), nullable=True)
     contact_number = db.Column(db.String(20), nullable=True)
@@ -155,6 +156,7 @@ class WasteItem(db.Model):
     
     barangay = db.relationship('Barangay', backref=db.backref('waste_items', lazy=True))
     collection_route = db.relationship('CollectionRoute', backref=db.backref('waste_items', lazy=True))
+    creator = db.relationship('User', backref=db.backref('created_waste_items', lazy=True))
 
 class WasteTracking(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -337,6 +339,7 @@ def add_waste():
             weight=weight,
             description=description,
             barangay_id=barangay_id,
+            created_by=session.get('user_id'),  # Set the creator
             address=address,
             contact_person=contact_person,
             contact_number=contact_number,
