@@ -292,13 +292,19 @@ def index():
 @barangay_required
 def add_waste():
     if request.method == 'POST':
-        waste_type = request.form['waste_type']
-        weight = float(request.form['weight']) if request.form['weight'] else None
-        description = request.form['description']
+        waste_type = request.form.get('waste_type', '')
+        weight = float(request.form['weight']) if request.form.get('weight') else None
+        description = request.form.get('description', '')
         barangay_id = int(request.form['barangay_id'])
-        address = request.form['address']
-        contact_person = request.form['contact_person']
-        contact_number = request.form['contact_number']
+        address = request.form.get('address', '')
+        contact_person = request.form.get('contact_person', '')
+        contact_number = request.form.get('contact_number', '')
+        
+        # Validate required fields
+        if not waste_type or not barangay_id:
+            flash('Please fill in all required fields.', 'error')
+            municipalities = Municipality.query.filter_by(name='Nabua', is_active=True).all()
+            return render_template('add_waste.html', municipalities=municipalities)
         
         # Generate unique item ID
         item_id = f"WM{datetime.now().strftime('%Y%m%d%H%M%S')}"
@@ -604,13 +610,18 @@ def users():
 def add_user():
     """Add new user (admin only)"""
     if request.method == 'POST':
-        username = request.form['username']
-        email = request.form['email']
-        password = request.form['password']
-        confirm_password = request.form['confirm_password']
-        full_name = request.form['full_name']
+        username = request.form.get('username', '')
+        email = request.form.get('email', '')
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        full_name = request.form.get('full_name', '')
         phone = request.form.get('phone', '')
-        role = request.form['role']
+        role = request.form.get('role', '')
+        
+        # Validate required fields
+        if not username or not email or not password or not full_name or not role:
+            flash('Please fill in all required fields.', 'error')
+            return render_template('add_user.html')
         
         # Validation
         if password != confirm_password:
@@ -735,12 +746,17 @@ def edit_user(user_id):
     
     if request.method == 'POST':
         # Get form data
-        username = request.form['username']
-        email = request.form['email']
-        full_name = request.form['full_name']
-        phone = request.form['phone']
-        role = request.form['role']
+        username = request.form.get('username', '')
+        email = request.form.get('email', '')
+        full_name = request.form.get('full_name', '')
+        phone = request.form.get('phone', '')
+        role = request.form.get('role', '')
         password = request.form.get('password', '')  # Optional password change
+        
+        # Validate required fields
+        if not username or not email or not full_name or not role:
+            flash('Please fill in all required fields.', 'error')
+            return render_template('edit_user.html', user=user)
         
         # Check if username is already taken by another user
         existing_user = User.query.filter(User.username == username, User.id != user_id).first()
