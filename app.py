@@ -195,53 +195,39 @@ def fetch_barangays_from_api(municipality_code):
         return []
 
 def sync_municipalities():
-    """Sync municipalities from API to database"""
-    municipalities_data = fetch_municipalities_from_api()
-    if not municipalities_data:
-        return False
+    """Sync only Nabua municipality to database"""
+    # Only sync Nabua municipality - no external API calls
+    nabua = Municipality.query.filter_by(name='Nabua').first()
+    if not nabua:
+        nabua = Municipality(
+            name='Nabua',
+            code='NBN',
+            province='Camarines Sur',
+            region='Region V (Bicol Region)',
+            is_active=True
+        )
+        db.session.add(nabua)
+        db.session.commit()
+        print("Nabua municipality created!")
+    else:
+        print("Nabua municipality already exists!")
     
-    for mun_data in municipalities_data:
-        # Check if municipality already exists
-        existing = Municipality.query.filter_by(code=mun_data.get('code')).first()
-        if not existing:
-            municipality = Municipality(
-                name=mun_data.get('name', ''),
-                code=mun_data.get('code', ''),
-                province=mun_data.get('province', ''),
-                region=mun_data.get('region', '')
-            )
-            db.session.add(municipality)
-    
-    db.session.commit()
     return True
 
 def sync_barangays(municipality_id):
-    """Sync barangays for a specific municipality from API to database"""
+    """Sync barangays for Nabua municipality only"""
     municipality = Municipality.query.get(municipality_id)
-    if not municipality:
+    if not municipality or municipality.name != 'Nabua':
         return False
     
-    barangays_data = fetch_barangays_from_api(municipality.code)
-    if not barangays_data:
-        return False
+    # Only sync if it's Nabua municipality
+    if Barangay.query.filter_by(municipality_id=municipality_id).count() > 0:
+        print("Barangays for Nabua already exist!")
+        return True
     
-    for brgy_data in barangays_data:
-        # Check if barangay already exists
-        existing = Barangay.query.filter_by(
-            code=brgy_data.get('code'),
-            municipality_id=municipality_id
-        ).first()
-        if not existing:
-            barangay = Barangay(
-                name=brgy_data.get('name', ''),
-                code=brgy_data.get('code', ''),
-                municipality_id=municipality_id,
-                population=brgy_data.get('population'),
-                area_km2=brgy_data.get('area_km2')
-            )
-            db.session.add(barangay)
-    
-    db.session.commit()
+    # Use the local script to add Nabua barangays
+    from add_nabua_barangays import add_nabua_barangays
+    add_nabua_barangays()
     return True
 
 # Routes
@@ -374,7 +360,7 @@ def add_waste():
         flash('Waste registered for collection successfully! Collection team will be notified.', 'success')
         return redirect(url_for('view_item', item_id=waste_item.item_id))
     
-    municipalities = Municipality.query.filter_by(is_active=True).all()
+    municipalities = Municipality.query.filter_by(name='Nabua', is_active=True).all()
     return render_template('add_waste.html', municipalities=municipalities)
 
 @app.route('/item/<item_id>')
@@ -556,8 +542,8 @@ def mark_collected(item_id):
 
 @app.route('/api/municipalities')
 def api_municipalities():
-    """Get all municipalities"""
-    municipalities = Municipality.query.filter_by(is_active=True).all()
+    """Get only Nabua municipality"""
+    municipalities = Municipality.query.filter_by(name='Nabua', is_active=True).all()
     return jsonify([{
         'id': mun.id,
         'name': mun.name,
@@ -568,13 +554,13 @@ def api_municipalities():
 
 @app.route('/api/municipalities/sync', methods=['POST'])
 def sync_municipalities_api():
-    """Sync municipalities from external API"""
+    """Sync only Nabua municipality"""
     try:
         success = sync_municipalities()
         if success:
-            return jsonify({'success': True, 'message': 'Municipalities synced successfully'})
+            return jsonify({'success': True, 'message': 'Nabua municipality synced successfully'})
         else:
-            return jsonify({'success': False, 'message': 'Failed to sync municipalities'})
+            return jsonify({'success': False, 'message': 'Failed to sync Nabua municipality'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
 
@@ -592,13 +578,17 @@ def api_barangays(municipality_id):
 
 @app.route('/api/municipalities/<int:municipality_id>/barangays/sync', methods=['POST'])
 def sync_barangays_api(municipality_id):
-    """Sync barangays for a specific municipality from external API"""
+    """Sync barangays for Nabua municipality only"""
     try:
+        municipality = Municipality.query.get(municipality_id)
+        if not municipality or municipality.name != 'Nabua':
+            return jsonify({'success': False, 'message': 'Only Nabua municipality is supported'})
+        
         success = sync_barangays(municipality_id)
         if success:
-            return jsonify({'success': True, 'message': 'Barangays synced successfully'})
+            return jsonify({'success': True, 'message': 'Nabua barangays synced successfully'})
         else:
-            return jsonify({'success': False, 'message': 'Failed to sync barangays'})
+            return jsonify({'success': False, 'message': 'Failed to sync Nabua barangays'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
 
