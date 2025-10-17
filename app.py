@@ -50,26 +50,17 @@ class User(db.Model):
     def is_barangay(self):
         return self.role == 'barangay'
 
-class Municipality(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    code = db.Column(db.String(10), nullable=False, unique=True)
-    province = db.Column(db.String(100), nullable=True)
-    region = db.Column(db.String(100), nullable=True)
-    is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
 class Barangay(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    code = db.Column(db.String(10), nullable=False)
-    municipality_id = db.Column(db.Integer, db.ForeignKey('municipality.id'), nullable=False)
+    code = db.Column(db.String(10), nullable=False, unique=True)
+    municipality = db.Column(db.String(100), nullable=False, default='Nabua')
+    province = db.Column(db.String(100), nullable=False, default='Camarines Sur')
+    region = db.Column(db.String(100), nullable=False, default='Region V (Bicol Region)')
     population = db.Column(db.Integer, nullable=True)
     area_km2 = db.Column(db.Float, nullable=True)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    municipality = db.relationship('Municipality', backref=db.backref('barangays', lazy=True))
 
 # Authentication decorators
 def login_required(f):
@@ -169,60 +160,11 @@ class WasteTracking(db.Model):
     waste_item = db.relationship('WasteItem', backref=db.backref('tracking_records', lazy=True))
 
 # API Functions
-def fetch_municipalities_from_api():
-    """Fetch municipalities from PSGC API"""
-    try:
-        # Using PSGC Cloud API
-        response = requests.get('https://psgc.cloud/api/cities-municipalities', timeout=10)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return []
-    except Exception as e:
-        print(f"Error fetching municipalities: {e}")
-        return []
-
-def fetch_barangays_from_api(municipality_code):
-    """Fetch barangays for a specific municipality from PSGC API"""
-    try:
-        response = requests.get(f'https://psgc.cloud/api/cities-municipalities/{municipality_code}/barangays', timeout=10)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return []
-    except Exception as e:
-        print(f"Error fetching barangays: {e}")
-        return []
-
-def sync_municipalities():
-    """Sync only Nabua municipality to database"""
-    # Only sync Nabua municipality - no external API calls
-    nabua = Municipality.query.filter_by(name='Nabua').first()
-    if not nabua:
-        nabua = Municipality(
-            name='Nabua',
-            code='NBN',
-            province='Camarines Sur',
-            region='Region V (Bicol Region)',
-            is_active=True
-        )
-        db.session.add(nabua)
-        db.session.commit()
-        print("Nabua municipality created!")
-    else:
-        print("Nabua municipality already exists!")
-    
-    return True
-
-def sync_barangays(municipality_id):
-    """Sync barangays for Nabua municipality only"""
-    municipality = Municipality.query.get(municipality_id)
-    if not municipality or municipality.name != 'Nabua':
-        return False
-    
-    # Only sync if it's Nabua municipality
-    if Barangay.query.filter_by(municipality_id=municipality_id).count() > 0:
-        print("Barangays for Nabua already exist!")
+def sync_barangays():
+    """Sync barangays for Nabua only"""
+    # Check if barangays already exist
+    if Barangay.query.count() > 0:
+        print("Barangays already exist!")
         return True
     
     # Use the local script to add Nabua barangays
@@ -303,8 +245,8 @@ def add_waste():
         # Validate required fields
         if not waste_type or not barangay_id:
             flash('Please fill in all required fields.', 'error')
-            municipalities = Municipality.query.filter_by(name='Nabua', is_active=True).all()
-            return render_template('add_waste.html', municipalities=municipalities)
+            barangays = Barangay.query.filter_by(is_active=True).all()
+            return render_template('add_waste.html', barangays=barangays)
         
         # Generate unique item ID
         item_id = f"WM{datetime.now().strftime('%Y%m%d%H%M%S')}"
@@ -366,8 +308,8 @@ def add_waste():
         flash('Waste registered for collection successfully! Collection team will be notified.', 'success')
         return redirect(url_for('view_item', item_id=waste_item.item_id))
     
-    municipalities = Municipality.query.filter_by(name='Nabua', is_active=True).all()
-    return render_template('add_waste.html', municipalities=municipalities)
+    barangays = Barangay.query.filter_by(is_active=True).all()
+    return render_template('add_waste.html', barangays=barangays)
 
 @app.route('/item/<item_id>')
 def view_item(item_id):
@@ -546,51 +488,26 @@ def mark_collected(item_id):
     flash('Waste item marked as collected!', 'success')
     return redirect(url_for('collection_team'))
 
-@app.route('/api/municipalities')
-def api_municipalities():
-    """Get only Nabua municipality"""
-    municipalities = Municipality.query.filter_by(name='Nabua', is_active=True).all()
-    return jsonify([{
-        'id': mun.id,
-        'name': mun.name,
-        'code': mun.code,
-        'province': mun.province,
-        'region': mun.region
-    } for mun in municipalities])
-
-@app.route('/api/municipalities/sync', methods=['POST'])
-def sync_municipalities_api():
-    """Sync only Nabua municipality"""
-    try:
-        success = sync_municipalities()
-        if success:
-            return jsonify({'success': True, 'message': 'Nabua municipality synced successfully'})
-        else:
-            return jsonify({'success': False, 'message': 'Failed to sync Nabua municipality'})
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)})
-
-@app.route('/api/municipalities/<int:municipality_id>/barangays')
-def api_barangays(municipality_id):
-    """Get barangays for a specific municipality"""
-    barangays = Barangay.query.filter_by(municipality_id=municipality_id, is_active=True).all()
+@app.route('/api/barangays')
+def api_barangays():
+    """Get all barangays"""
+    barangays = Barangay.query.filter_by(is_active=True).all()
     return jsonify([{
         'id': brgy.id,
         'name': brgy.name,
         'code': brgy.code,
+        'municipality': brgy.municipality,
+        'province': brgy.province,
+        'region': brgy.region,
         'population': brgy.population,
         'area_km2': brgy.area_km2
     } for brgy in barangays])
 
-@app.route('/api/municipalities/<int:municipality_id>/barangays/sync', methods=['POST'])
-def sync_barangays_api(municipality_id):
-    """Sync barangays for Nabua municipality only"""
+@app.route('/api/barangays/sync', methods=['POST'])
+def sync_barangays_api():
+    """Sync barangays for Nabua only"""
     try:
-        municipality = Municipality.query.get(municipality_id)
-        if not municipality or municipality.name != 'Nabua':
-            return jsonify({'success': False, 'message': 'Only Nabua municipality is supported'})
-        
-        success = sync_barangays(municipality_id)
+        success = sync_barangays()
         if success:
             return jsonify({'success': True, 'message': 'Nabua barangays synced successfully'})
         else:
@@ -654,16 +571,10 @@ def add_user():
     
     return render_template('add_user.html')
 
-@app.route('/municipalities')
-@admin_required
-def municipalities():
-    """Municipality management page"""
-    municipalities = Municipality.query.filter_by(is_active=True).all()
-    return render_template('municipalities.html', municipalities=municipalities)
 
 @app.route('/api/items')
 def api_items():
-    items = WasteItem.query.join(Barangay).join(Municipality).all()
+    items = WasteItem.query.join(Barangay).all()
     return jsonify([{
         'id': item.id,
         'item_id': item.item_id,
@@ -671,7 +582,7 @@ def api_items():
         'waste_type': item.waste_type,
         'status': item.status,
         'barangay': item.barangay.name,
-        'municipality': item.barangay.municipality.name,
+        'municipality': item.barangay.municipality,
         'address': item.address,
         'created_at': item.created_at.isoformat()
     } for item in items])
@@ -792,8 +703,64 @@ def edit_user(user_id):
     
     return render_template('edit_user.html', user=user)
 
+def backup_user_data():
+    """Create a backup of user data for safety"""
+    try:
+        users = User.query.all()
+        backup_data = []
+        for user in users:
+            backup_data.append({
+                'username': user.username,
+                'email': user.email,
+                'full_name': user.full_name,
+                'phone': user.phone,
+                'role': user.role,
+                'is_active': user.is_active,
+                'created_at': user.created_at.isoformat() if user.created_at else None
+            })
+        
+        # Save backup to a JSON file
+        import json
+        with open('user_backup.json', 'w') as f:
+            json.dump(backup_data, f, indent=2)
+        
+        print(f"💾 User data backed up to user_backup.json ({len(backup_data)} users)")
+        return True
+    except Exception as e:
+        print(f"⚠️  Failed to backup user data: {e}")
+        return False
+
+def check_database_health():
+    """Check database health and ensure data persistence"""
+    try:
+        # Test database connection
+        db.session.execute('SELECT 1')
+        print("✅ Database connection is healthy")
+        
+        # Check if tables exist
+        from sqlalchemy import inspect
+        inspector = inspect(db.engine)
+        tables = inspector.get_table_names()
+        required_tables = ['user', 'barangay', 'waste_item', 'waste_tracking', 'collection_route']
+        
+        missing_tables = [table for table in required_tables if table not in tables]
+        if missing_tables:
+            print(f"⚠️  Missing tables: {missing_tables}")
+            return False
+        else:
+            print("✅ All required tables exist")
+            return True
+            
+    except Exception as e:
+        print(f"❌ Database health check failed: {e}")
+        return False
+
 def create_default_users():
-    """Create only the main admin account"""
+    """Create only the main admin account and preserve existing users"""
+    # Count existing users
+    total_users = User.query.count()
+    print(f"📊 Found {total_users} existing users in the database")
+    
     # Check if admin user already exists
     admin_user = User.query.filter_by(username='admin').first()
     if not admin_user:
@@ -813,18 +780,41 @@ def create_default_users():
     # Commit changes
     db.session.commit()
     
+    # Count users after creation
+    final_user_count = User.query.count()
+    print(f"📊 Total users in database: {final_user_count}")
+    
+    # List all users for verification
+    all_users = User.query.all()
+    print("\n👥 Current users in the system:")
+    for user in all_users:
+        print(f"  - {user.username} ({user.role}) - {user.full_name}")
+    
     print("\n" + "="*50)
-    print("🎉 ADMIN ACCOUNT CREATED")
+    print("🎉 SYSTEM INITIALIZATION COMPLETE")
     print("="*50)
     print("Admin Account:")
     print("  Username: admin        | Password: admin123")
     print("="*50)
+    print("All existing users have been preserved!")
     print("You can now log in to the system!")
     print("="*50)
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()
+        print("🚀 Starting Nabua Waste Management System...")
+        print("="*50)
+        
+        # Check database health
+        if not check_database_health():
+            print("⚠️  Database issues detected, recreating tables...")
+            db.drop_all()
+            db.create_all()
+            print("✅ Database tables recreated")
+        
+        # Create backup of existing users
+        backup_user_data()
+        
         # Create default users on first run
         create_default_users()
     

@@ -48,32 +48,19 @@
                         
                         <!-- Location Selection -->
                         <div class="row mb-4">
-                            <div class="col-md-6">
-                                <label for="municipality_id" class="form-label fw-bold text-dark mb-3">
-                                    <i class="fas fa-building me-2 text-primary"></i>Municipality/City *
+                            <div class="col-12">
+                                <label for="barangay_id" class="form-label fw-bold text-dark mb-3">
+                                    <i class="fas fa-home me-2 text-primary"></i>Barangay *
                                 </label>
-                                <select class="form-select form-select-lg" id="municipality_id" name="municipality_id" required>
-                                    <option value="">Choose your municipality...</option>
-                                    {% for municipality in municipalities %}
-                                    <option value="{{ municipality.id }}">{{ municipality.name }}, {{ municipality.province }}</option>
+                                <select class="form-select form-select-lg" id="barangay_id" name="barangay_id" required>
+                                    <option value="">Choose your barangay...</option>
+                                    {% for barangay in barangays %}
+                                    <option value="{{ barangay.id }}">{{ barangay.name }}</option>
                                     {% endfor %}
                                 </select>
                                 <div class="form-text">
                                     <i class="fas fa-map-marker-alt me-1"></i>
-                                    Select your municipality or city
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="barangay_id" class="form-label fw-bold text-dark mb-3">
-                                    <i class="fas fa-home me-2 text-primary"></i>Barangay *
-                                </label>
-                                <select class="form-select form-select-lg" id="barangay_id" name="barangay_id" required disabled>
-                                    <option value="">Select municipality first</option>
-                                </select>
-                                <div class="form-text">
-                                    <button type="button" class="btn btn-sm btn-outline-primary" id="sync-barangays" style="display: none;">
-                                        <i class="fas fa-sync me-1"></i>Sync Barangays
-                                    </button>
+                                    Select your barangay in Nabua, Camarines Sur
                                 </div>
                             </div>
                         </div>
@@ -232,83 +219,10 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const municipalitySelect = document.getElementById('municipality_id');
-    const barangaySelect = document.getElementById('barangay_id');
-    const syncBtn = document.getElementById('sync-barangays');
     const form = document.getElementById('wasteForm');
     const submitBtn = document.getElementById('submitBtn');
     const btnText = submitBtn.querySelector('.btn-text');
     const loading = submitBtn.querySelector('.loading');
-
-    // Municipality change handler
-    municipalitySelect.addEventListener('change', function() {
-        const municipalityId = this.value;
-        
-        if (municipalityId) {
-            barangaySelect.disabled = false;
-            barangaySelect.innerHTML = '<option value="">Loading barangays...</option>';
-            
-            fetch(`/api/municipalities/${municipalityId}/barangays`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data && data.length > 0) {
-                        barangaySelect.innerHTML = '<option value="">Select barangay</option>';
-                        data.forEach(barangay => {
-                            const option = document.createElement('option');
-                            option.value = barangay.id;
-                            option.textContent = barangay.name;
-                            barangaySelect.appendChild(option);
-                        });
-                    } else {
-                        barangaySelect.innerHTML = '<option value="">No barangays found</option>';
-                        syncBtn.style.display = 'inline-block';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading barangays:', error);
-                    barangaySelect.innerHTML = '<option value="">Error loading barangays</option>';
-                    syncBtn.style.display = 'inline-block';
-                });
-        } else {
-            barangaySelect.disabled = true;
-            barangaySelect.innerHTML = '<option value="">Select municipality first</option>';
-            syncBtn.style.display = 'none';
-        }
-    });
-
-    // Sync barangays handler
-    syncBtn.addEventListener('click', function() {
-        const municipalityId = municipalitySelect.value;
-        if (municipalityId) {
-            this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Syncing...';
-            this.disabled = true;
-            
-            fetch(`/api/municipalities/${municipalityId}/barangays/sync`, { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        barangaySelect.innerHTML = '<option value="">Select barangay</option>';
-                        data.barangays.forEach(barangay => {
-                            const option = document.createElement('option');
-                            option.value = barangay.id;
-                            option.textContent = barangay.name;
-                            barangaySelect.appendChild(option);
-                        });
-                        this.style.display = 'none';
-                    } else {
-                        alert('Failed to sync barangays: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error syncing barangays:', error);
-                    alert('Error syncing barangays. Please try again.');
-                })
-                .finally(() => {
-                    this.innerHTML = '<i class="fas fa-sync me-1"></i>Sync Barangays';
-                    this.disabled = false;
-                });
-        }
-    });
 
     // Form submission handler
     form.addEventListener('submit', function() {
