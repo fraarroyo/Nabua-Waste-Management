@@ -162,14 +162,22 @@ class WasteTracking(db.Model):
 # API Functions
 def sync_barangays():
     """Sync barangays for Nabua only"""
+    print("Checking barangay data...")
+    
     # Check if barangays already exist
-    if Barangay.query.count() > 0:
-        print("Barangays already exist!")
+    existing_count = Barangay.query.count()
+    if existing_count > 0:
+        print(f"Found {existing_count} existing barangays")
         return True
     
+    print("No barangays found, initializing...")
     # Use the local script to add Nabua barangays
     from add_nabua_barangays import add_nabua_barangays
     add_nabua_barangays()
+    
+    # Verify barangays were added
+    final_count = Barangay.query.count()
+    print(f"Barangay initialization complete: {final_count} barangays loaded")
     return True
 
 # Routes
@@ -515,6 +523,22 @@ def sync_barangays_api():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
 
+@app.route('/api/barangays/force-sync', methods=['POST'])
+def force_sync_barangays_api():
+    """Force sync barangays (for deployment issues)"""
+    try:
+        # Clear existing barangays and re-sync
+        Barangay.query.delete()
+        db.session.commit()
+        
+        from add_nabua_barangays import add_nabua_barangays
+        add_nabua_barangays()
+        
+        count = Barangay.query.count()
+        return jsonify({'success': True, 'message': f'Force sync completed: {count} barangays loaded'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
 @app.route('/users')
 @admin_required
 def users():
@@ -724,10 +748,10 @@ def backup_user_data():
         with open('user_backup.json', 'w') as f:
             json.dump(backup_data, f, indent=2)
         
-        print(f"💾 User data backed up to user_backup.json ({len(backup_data)} users)")
+        print(f"User data backed up to user_backup.json ({len(backup_data)} users)")
         return True
     except Exception as e:
-        print(f"⚠️  Failed to backup user data: {e}")
+        print(f"Failed to backup user data: {e}")
         return False
 
 def check_database_health():
@@ -735,7 +759,7 @@ def check_database_health():
     try:
         # Test database connection
         db.session.execute('SELECT 1')
-        print("✅ Database connection is healthy")
+        print("Database connection is healthy")
         
         # Check if tables exist
         from sqlalchemy import inspect
@@ -745,14 +769,14 @@ def check_database_health():
         
         missing_tables = [table for table in required_tables if table not in tables]
         if missing_tables:
-            print(f"⚠️  Missing tables: {missing_tables}")
+            print(f"Missing tables: {missing_tables}")
             return False
         else:
-            print("✅ All required tables exist")
+            print("All required tables exist")
             return True
             
     except Exception as e:
-        print(f"❌ Database health check failed: {e}")
+        print(f"Database health check failed: {e}")
         return False
 
 def create_default_users():
@@ -773,9 +797,9 @@ def create_default_users():
         )
         admin.set_password('admin123')
         db.session.add(admin)
-        print("✅ Admin account created successfully!")
+        print("Admin account created successfully!")
     else:
-        print("ℹ️  Admin account already exists")
+        print("Admin account already exists")
     
     # Commit changes
     db.session.commit()
@@ -802,18 +826,21 @@ def create_default_users():
 
 if __name__ == '__main__':
     with app.app_context():
-        print("🚀 Starting Nabua Waste Management System...")
+        print("Starting Nabua Waste Management System...")
         print("="*50)
         
         # Check database health
         if not check_database_health():
-            print("⚠️  Database issues detected, recreating tables...")
+            print("Database issues detected, recreating tables...")
             db.drop_all()
             db.create_all()
-            print("✅ Database tables recreated")
+            print("Database tables recreated")
         
         # Create backup of existing users
         backup_user_data()
+        
+        # Initialize barangays if they don't exist
+        sync_barangays()
         
         # Create default users on first run
         create_default_users()
