@@ -37,6 +37,8 @@
             box-shadow: var(--shadow-soft);
             backdrop-filter: blur(10px);
             border: none;
+            z-index: 9998;
+            position: relative;
         }
 
         .navbar-brand {
@@ -70,6 +72,8 @@
             overflow: hidden;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 1;
         }
 
         .card:hover {
@@ -246,6 +250,22 @@
             box-shadow: var(--shadow-soft);
             backdrop-filter: blur(10px);
             background: rgba(255, 255, 255, 0.95);
+            z-index: 9999 !important;
+            position: absolute !important;
+        }
+        
+        .nav-item.dropdown {
+            position: relative;
+            z-index: 9999;
+        }
+        
+        .dropdown-toggle {
+            position: relative;
+            z-index: 9999;
+        }
+        
+        .navbar-nav .dropdown-menu {
+            z-index: 9999 !important;
         }
 
         .dropdown-item {
@@ -262,6 +282,13 @@
 
         .container-fluid {
             padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        main.container {
+            position: relative;
+            z-index: 1;
         }
 
         .row {
@@ -475,8 +502,8 @@
                             </span>
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profile</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('profile') }}"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('settings') }}"><i class="fas fa-cog me-2"></i>Settings</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                         </ul>

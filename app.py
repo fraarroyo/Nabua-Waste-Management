@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, session
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, session, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -78,7 +78,7 @@ def admin_required(f):
         if 'user_id' not in session:
             flash('Please log in to access this page.', 'warning')
             return redirect(url_for('login'))
-        user = User.query.get(session['user_id'])
+        user = db.session.get(User, session['user_id'])
         if not user or not user.is_admin():
             flash('Admin access required.', 'danger')
             return redirect(url_for('index'))
@@ -91,7 +91,7 @@ def collector_required(f):
         if 'user_id' not in session:
             flash('Please log in to access this page.', 'warning')
             return redirect(url_for('login'))
-        user = User.query.get(session['user_id'])
+        user = db.session.get(User, session['user_id'])
         if not user or not (user.is_collector() or user.is_admin()):
             flash('Collection team access required.', 'danger')
             return redirect(url_for('index'))
@@ -104,7 +104,7 @@ def barangay_required(f):
         if 'user_id' not in session:
             flash('Please log in to access this page.', 'warning')
             return redirect(url_for('login'))
-        user = User.query.get(session['user_id'])
+        user = db.session.get(User, session['user_id'])
         if not user or not (user.is_barangay() or user.is_admin()):
             flash('Barangay access required.', 'danger')
             return redirect(url_for('index'))
@@ -113,7 +113,7 @@ def barangay_required(f):
 
 def get_current_user():
     if 'user_id' in session:
-        return User.query.get(session['user_id'])
+        return db.session.get(User, session['user_id'])
     return None
 
 class CollectionRoute(db.Model):
@@ -144,10 +144,16 @@ class WasteItem(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     qr_code_data = db.Column(db.Text, nullable=True)
+    client_confirmed = db.Column(db.Boolean, default=False, nullable=False)  # Client confirmation for collection
+    client_confirmed_at = db.Column(db.DateTime, nullable=True)  # When client confirmed
+    is_sorted = db.Column(db.Boolean, default=False, nullable=False)  # Whether waste is sorted
+    sorted_at = db.Column(db.DateTime, nullable=True)  # When waste was marked as sorted
+    sorted_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Who marked it as sorted
     
     barangay = db.relationship('Barangay', backref=db.backref('waste_items', lazy=True))
     collection_route = db.relationship('CollectionRoute', backref=db.backref('waste_items', lazy=True))
-    creator = db.relationship('User', backref=db.backref('created_waste_items', lazy=True))
+    creator = db.relationship('User', foreign_keys=[created_by], backref=db.backref('created_waste_items', lazy=True))
+    sorter = db.relationship('User', foreign_keys=[sorted_by], backref=db.backref('sorted_waste_items', lazy=True))
 
 class WasteTracking(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -209,6 +215,91 @@ def logout():
     session.clear()
     flash('You have been logged out.', 'info')
     return redirect(url_for('login'))
+
+@app.route('/profile')
+@login_required
+def profile():
+    """User profile page"""
+    user = get_current_user()
+    if not user:
+        flash('User not found.', 'error')
+        return redirect(url_for('login'))
+    
+    # Get user statistics
+    total_waste_items = WasteItem.query.filter_by(created_by=user.id).count()
+    pending_items = WasteItem.query.filter_by(created_by=user.id, status='pending_collection').count()
+    collected_items = WasteItem.query.filter_by(created_by=user.id, status='collected').count()
+    
+    return render_template('profile.html', 
+                         user=user,
+                         total_waste_items=total_waste_items,
+                         pending_items=pending_items,
+                         collected_items=collected_items)
+
+@app.route('/settings', methods=['GET', 'POST'])
+@login_required
+def settings():
+    """User settings page - allows users to update their own profile"""
+    user = get_current_user()
+    if not user:
+        flash('User not found.', 'error')
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        # Get form data
+        email = request.form.get('email', '')
+        full_name = request.form.get('full_name', '')
+        phone = request.form.get('phone', '')
+        current_password = request.form.get('current_password', '')
+        new_password = request.form.get('new_password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        
+        # Validate required fields
+        if not email or not full_name:
+            flash('Please fill in all required fields.', 'error')
+            return render_template('settings.html', user=user)
+        
+        # Check if email is already taken by another user
+        existing_email = User.query.filter(User.email == email, User.id != user.id).first()
+        if existing_email:
+            flash('Email already exists!', 'error')
+            return render_template('settings.html', user=user)
+        
+        try:
+            # Update user information
+            user.email = email
+            user.full_name = full_name
+            user.phone = phone if phone else None
+            
+            # Update password if provided
+            if new_password:
+                if not current_password:
+                    flash('Please enter your current password to change it.', 'error')
+                    return render_template('settings.html', user=user)
+                
+                if not user.check_password(current_password):
+                    flash('Current password is incorrect.', 'error')
+                    return render_template('settings.html', user=user)
+                
+                if new_password != confirm_password:
+                    flash('New passwords do not match.', 'error')
+                    return render_template('settings.html', user=user)
+                
+                if len(new_password) < 6:
+                    flash('New password must be at least 6 characters long.', 'error')
+                    return render_template('settings.html', user=user)
+                
+                user.set_password(new_password)
+            
+            db.session.commit()
+            flash('Settings updated successfully!', 'success')
+            return redirect(url_for('settings'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating settings: {str(e)}', 'error')
+    
+    return render_template('settings.html', user=user)
 
 @app.route('/')
 @login_required
@@ -291,11 +382,12 @@ def add_waste():
         )
         
         # Generate QR code data
+        barangay = db.session.get(Barangay, barangay_id)
         qr_data = {
             'item_id': item_id,
             'item_name': item_name,
             'waste_type': waste_type,
-            'barangay': Barangay.query.get(barangay_id).name,
+            'barangay': barangay.name if barangay else 'N/A',
             'created_at': current_time.isoformat()
         }
         waste_item.qr_code_data = json.dumps(qr_data)
@@ -474,12 +566,32 @@ def collection_team():
         WasteItem.status == 'pending_collection'
     ).order_by(Barangay.name, WasteItem.created_at).all()
     
-    return render_template('collection_team.html', pending_collections=pending_collections)
+    # Get collected items waiting for client confirmation
+    awaiting_confirmation = WasteItem.query.join(Barangay).filter(
+        WasteItem.status == 'collected',
+        WasteItem.client_confirmed == False
+    ).order_by(WasteItem.updated_at.desc()).all()
+    
+    return render_template('collection_team.html', 
+                         pending_collections=pending_collections,
+                         awaiting_confirmation=awaiting_confirmation)
 
 @app.route('/mark_collected/<item_id>', methods=['POST'])
 def mark_collected(item_id):
     waste_item = WasteItem.query.filter_by(item_id=item_id).first_or_404()
+    
+    # Check if waste is sorted before allowing collection
+    if not waste_item.is_sorted:
+        flash('Cannot collect waste that is not sorted. Please mark the waste as sorted first.', 'error')
+        return redirect(url_for('collection_team'))
+    
+    # Only allow collection if status is pending_collection
+    if waste_item.status != 'pending_collection':
+        flash('This waste item cannot be collected in its current status.', 'warning')
+        return redirect(url_for('collection_team'))
+    
     waste_item.status = 'collected'
+    waste_item.client_confirmed = False  # Require client confirmation
     waste_item.updated_at = datetime.utcnow()
     
     # Add tracking record
@@ -487,14 +599,136 @@ def mark_collected(item_id):
         waste_item_id=waste_item.id,
         status='collected',
         location=waste_item.address,
-        notes=f'Collected by collection team at {datetime.now().strftime("%Y-%m-%d %H:%M")}'
+        notes=f'Collected by collection team at {datetime.now().strftime("%Y-%m-%d %H:%M")}. Waiting for client confirmation.'
     )
     
     db.session.add(tracking)
     db.session.commit()
     
-    flash('Waste item marked as collected!', 'success')
+    flash('Waste item marked as collected! Waiting for client confirmation.', 'success')
     return redirect(url_for('collection_team'))
+
+@app.route('/mark_sorted/<item_id>', methods=['POST'])
+@login_required
+def mark_sorted(item_id):
+    """Mark waste as sorted (can be done by creator, collector, or admin)"""
+    waste_item = WasteItem.query.filter_by(item_id=item_id).first_or_404()
+    current_user = get_current_user()
+    
+    # Only allow marking as sorted if status is pending_collection
+    if waste_item.status != 'pending_collection':
+        flash('Waste can only be marked as sorted when it is pending collection.', 'warning')
+        return redirect(url_for('view_item', item_id=item_id))
+    
+    if waste_item.is_sorted:
+        flash('This waste item is already marked as sorted.', 'info')
+        return redirect(url_for('view_item', item_id=item_id))
+    
+    # Mark as sorted
+    waste_item.is_sorted = True
+    waste_item.sorted_at = datetime.utcnow()
+    waste_item.sorted_by = current_user.id
+    waste_item.updated_at = datetime.utcnow()
+    
+    # Add tracking record
+    tracking = WasteTracking(
+        waste_item_id=waste_item.id,
+        status='pending_collection',
+        location=waste_item.address,
+        notes=f'Waste marked as sorted by {current_user.full_name} at {datetime.now().strftime("%Y-%m-%d %H:%M")}'
+    )
+    
+    db.session.add(tracking)
+    db.session.commit()
+    
+    flash('Waste marked as sorted successfully! It is now ready for collection.', 'success')
+    return redirect(url_for('view_item', item_id=item_id))
+
+@app.route('/mark_unsorted/<item_id>', methods=['POST'])
+@login_required
+def mark_unsorted(item_id):
+    """Mark waste as unsorted and uncollected"""
+    waste_item = WasteItem.query.filter_by(item_id=item_id).first_or_404()
+    current_user = get_current_user()
+    
+    # Only allow if user is creator, collector, or admin
+    if waste_item.created_by != current_user.id and not current_user.is_collector() and not current_user.is_admin():
+        flash('You do not have permission to mark this waste as unsorted.', 'error')
+        return redirect(url_for('view_item', item_id=item_id))
+    
+    # Mark as unsorted and reset to pending_collection if it was collected
+    waste_item.is_sorted = False
+    waste_item.sorted_at = None
+    waste_item.sorted_by = None
+    
+    # If waste was collected but not sorted, mark as uncollected
+    if waste_item.status == 'collected':
+        waste_item.status = 'pending_collection'
+        waste_item.client_confirmed = False
+        waste_item.client_confirmed_at = None
+        
+        # Add tracking record
+        tracking = WasteTracking(
+            waste_item_id=waste_item.id,
+            status='pending_collection',
+            location=waste_item.address,
+            notes=f'Waste marked as unsorted and uncollected by {current_user.full_name} at {datetime.now().strftime("%Y-%m-%d %H:%M")}. Waste must be sorted before collection.'
+        )
+    else:
+        # Add tracking record
+        tracking = WasteTracking(
+            waste_item_id=waste_item.id,
+            status=waste_item.status,
+            location=waste_item.address,
+            notes=f'Waste marked as unsorted by {current_user.full_name} at {datetime.now().strftime("%Y-%m-%d %H:%M")}'
+        )
+    
+    waste_item.updated_at = datetime.utcnow()
+    db.session.add(tracking)
+    db.session.commit()
+    
+    flash('Waste marked as unsorted. It must be sorted before collection.', 'warning')
+    return redirect(url_for('view_item', item_id=item_id))
+
+@app.route('/confirm_collection/<item_id>', methods=['POST'])
+@login_required
+def confirm_collection(item_id):
+    """Allow client (creator) to confirm that waste was collected"""
+    waste_item = WasteItem.query.filter_by(item_id=item_id).first_or_404()
+    current_user = get_current_user()
+    
+    # Check if user is the creator or admin
+    if waste_item.status != 'collected':
+        flash('This item has not been marked as collected yet.', 'warning')
+        return redirect(url_for('view_item', item_id=item_id))
+    
+    if waste_item.client_confirmed:
+        flash('This item has already been confirmed.', 'info')
+        return redirect(url_for('view_item', item_id=item_id))
+    
+    # Only allow the creator or admin to confirm
+    if waste_item.created_by != current_user.id and not current_user.is_admin():
+        flash('You do not have permission to confirm this collection.', 'error')
+        return redirect(url_for('view_item', item_id=item_id))
+    
+    # Confirm the collection
+    waste_item.client_confirmed = True
+    waste_item.client_confirmed_at = datetime.utcnow()
+    waste_item.updated_at = datetime.utcnow()
+    
+    # Add tracking record
+    tracking = WasteTracking(
+        waste_item_id=waste_item.id,
+        status='collected',
+        location=waste_item.address,
+        notes=f'Collection confirmed by client at {datetime.now().strftime("%Y-%m-%d %H:%M")}'
+    )
+    
+    db.session.add(tracking)
+    db.session.commit()
+    
+    flash('Collection confirmed successfully! Thank you for confirming.', 'success')
+    return redirect(url_for('view_item', item_id=item_id))
 
 @app.route('/api/barangays')
 def api_barangays():
@@ -615,7 +849,9 @@ def api_items():
 @admin_required
 def delete_user(user_id):
     """Delete a user account"""
-    user = User.query.get_or_404(user_id)
+    user = db.session.get(User, user_id)
+    if not user:
+        abort(404)
     
     # Prevent deleting the current user
     if user.id == session.get('user_id'):
@@ -653,7 +889,7 @@ def delete_waste_item(item_id):
     item = WasteItem.query.filter_by(item_id=item_id).first_or_404()
     
     # Only allow admin or the creator to delete
-    current_user = User.query.get(session.get('user_id'))
+    current_user = db.session.get(User, session.get('user_id')) if session.get('user_id') else None
     if current_user.role != 'admin' and item.created_by != current_user.id:
         flash('You do not have permission to delete this item!', 'error')
         return redirect(url_for('index'))
@@ -677,7 +913,9 @@ def delete_waste_item(item_id):
 @admin_required
 def edit_user(user_id):
     """Edit user account"""
-    user = User.query.get_or_404(user_id)
+    user = db.session.get(User, user_id)
+    if not user:
+        abort(404)
     
     if request.method == 'POST':
         # Get form data
@@ -779,6 +1017,39 @@ def check_database_health():
         print(f"Database health check failed: {e}")
         return False
 
+def initialize_database():
+    """Initialize database tables only if they don't exist - NEVER drop existing tables"""
+    try:
+        from sqlalchemy import inspect
+        inspector = inspect(db.engine)
+        existing_tables = inspector.get_table_names()
+        required_tables = ['user', 'barangay', 'waste_item', 'waste_tracking', 'collection_route']
+        
+        # Check if database file exists
+        db_file = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
+        db_exists = os.path.exists(db_file) if db_file else False
+        
+        # Only create tables if they don't exist
+        if not existing_tables or not all(table in existing_tables for table in required_tables):
+            print("Creating missing database tables...")
+            db.create_all()
+            print("Database tables created successfully")
+            return True
+        else:
+            print("Database tables already exist - preserving all data")
+            return True
+            
+    except Exception as e:
+        print(f"Error initializing database: {e}")
+        # If there's an error, try to create tables anyway (first run)
+        try:
+            db.create_all()
+            print("Database tables created after error recovery")
+            return True
+        except Exception as e2:
+            print(f"Failed to create database tables: {e2}")
+            return False
+
 def create_default_users():
     """Create only the main admin account and preserve existing users"""
     # Count existing users
@@ -829,20 +1100,20 @@ if __name__ == '__main__':
         print("Starting Nabua Waste Management System...")
         print("="*50)
         
-        # Check database health
-        if not check_database_health():
-            print("Database issues detected, recreating tables...")
-            db.drop_all()
-            db.create_all()
-            print("Database tables recreated")
+        # Initialize database - only creates tables if they don't exist
+        # NEVER drops existing tables to preserve data
+        initialize_database()
         
-        # Create backup of existing users
+        # Check database health (read-only check)
+        check_database_health()
+        
+        # Create backup of existing users (for safety)
         backup_user_data()
         
         # Initialize barangays if they don't exist
         sync_barangays()
         
-        # Create default users on first run
+        # Create default users on first run (only if admin doesn't exist)
         create_default_users()
     
     # Get port from environment variable or default to 5000

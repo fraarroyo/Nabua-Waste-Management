@@ -164,9 +164,27 @@
                                 </span>
                             </td>
                             <td>
-                                <span class="badge status-badge bg-{{ 'success' if item.status == 'collected' else 'warning' if item.status == 'in_transit' else 'info' if item.status == 'processed' else 'dark' }}">
-                                    {{ item.status.replace('_', ' ').title() }}
+                                <span class="badge status-badge bg-{{ 'success' if item.status == 'collected' and item.client_confirmed else 'warning' if item.status == 'collected' and not item.client_confirmed else 'warning' if item.status == 'in_transit' else 'info' if item.status == 'processed' else 'dark' }}">
+                                    {% if item.status == 'collected' and not item.client_confirmed %}
+                                        Collected (Pending Confirmation)
+                                    {% else %}
+                                        {{ item.status.replace('_', ' ').title() }}
+                                    {% endif %}
                                 </span>
+                                {% if item.status == 'collected' and item.client_confirmed %}
+                                    <span class="badge bg-success ms-1">
+                                        <i class="fas fa-check-circle"></i>
+                                    </span>
+                                {% endif %}
+                                {% if item.status == 'pending_collection' and not item.is_sorted %}
+                                    <span class="badge bg-danger ms-1" title="Waste not sorted - cannot be collected">
+                                        <i class="fas fa-times-circle"></i> Not Sorted
+                                    </span>
+                                {% elif item.status == 'pending_collection' and item.is_sorted %}
+                                    <span class="badge bg-success ms-1" title="Waste sorted - ready for collection">
+                                        <i class="fas fa-check-circle"></i> Sorted
+                                    </span>
+                                {% endif %}
                             </td>
                             <td>{{ item.location or 'N/A' }}</td>
                             <td>{{ item.created_at.strftime('%Y-%m-%d %H:%M') }}</td>

@@ -13,6 +13,10 @@
             </div>
             <div class="card-body">
                 <p class="text-muted">View and manage pending waste collections by barangay</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Note:</strong> Waste items must be sorted before they can be collected. Items that are not sorted will show a "Not Sorted" badge and cannot be marked as collected.
+                </div>
                 
                 {% if pending_collections %}
                     <div class="table-responsive">
@@ -26,6 +30,7 @@
                                     <th>Contact</th>
                                     <th>Waste Type</th>
                                     <th>Weight</th>
+                                    <th>Sorted</th>
                                     <th>Registered</th>
                                     <th>Actions</th>
                                 </tr>
@@ -57,13 +62,30 @@
                                         </span>
                                     </td>
                                     <td>{{ item.weight or 'N/A' }} kg</td>
+                                    <td>
+                                        {% if item.is_sorted %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check-circle me-1"></i>Sorted
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times-circle me-1"></i>Not Sorted
+                                            </span>
+                                        {% endif %}
+                                    </td>
                                     <td>{{ item.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                                     <td>
-                                        <form method="POST" action="{{ url_for('mark_collected', item_id=item.item_id) }}" class="d-inline">
-                                            <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Mark this item as collected?')">
-                                                <i class="fas fa-check me-1"></i>Mark Collected
+                                        {% if item.is_sorted %}
+                                            <form method="POST" action="{{ url_for('mark_collected', item_id=item.item_id) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Mark this item as collected?')">
+                                                    <i class="fas fa-check me-1"></i>Mark Collected
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <button type="button" class="btn btn-secondary btn-sm" disabled title="Waste must be sorted before collection">
+                                                <i class="fas fa-ban me-1"></i>Not Sorted
                                             </button>
-                                        </form>
+                                        {% endif %}
                                         <a href="{{ url_for('view_item', item_id=item.item_id) }}" class="btn btn-outline-primary btn-sm">
                                             <i class="fas fa-eye"></i>
                                         </a>
@@ -82,6 +104,69 @@
         </div>
     </div>
 </div>
+
+<!-- Awaiting Client Confirmation Section -->
+{% if awaiting_confirmation %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>Awaiting Client Confirmation
+                </h4>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">These items have been marked as collected and are waiting for client confirmation.</p>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Item ID</th>
+                                <th>Item Name</th>
+                                <th>Barangay</th>
+                                <th>Address</th>
+                                <th>Contact</th>
+                                <th>Collected At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in awaiting_confirmation %}
+                            <tr>
+                                <td><code>{{ item.item_id }}</code></td>
+                                <td>{{ item.item_name }}</td>
+                                <td>
+                                    <span class="badge bg-primary">{{ item.barangay.name }}</span>
+                                </td>
+                                <td>{{ item.address }}</td>
+                                <td>
+                                    {% if item.contact_person %}
+                                        <div class="small">
+                                            <strong>{{ item.contact_person }}</strong><br>
+                                            {% if item.contact_number %}
+                                                <i class="fas fa-phone me-1"></i>{{ item.contact_number }}
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">No contact info</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    <a href="{{ url_for('view_item', item_id=item.item_id) }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <!-- Collection Statistics -->
 <div class="row mt-4">
@@ -110,4 +195,18 @@
         </div>
     </div>
 </div>
+
+<!-- Awaiting Confirmation Statistics -->
+{% if awaiting_confirmation %}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card bg-warning text-dark">
+            <div class="card-body text-center">
+                <h3>{{ awaiting_confirmation|length }}</h3>
+                <p class="mb-0">Items Awaiting Client Confirmation</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
