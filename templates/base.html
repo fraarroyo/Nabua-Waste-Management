@@ -460,6 +460,11 @@
                             <i class="fas fa-truck me-1"></i>Collection Team
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('registered_items') }}">
+                            <i class="fas fa-list me-1"></i>Registered Items
+                        </a>
+                    </li>
                     {% endif %}
                     
                     <!-- Admin Users: Full access -->
@@ -480,6 +485,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('registered_items') }}">
+                            <i class="fas fa-list me-1"></i>Registered Items
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('dashboard') }}">
                             <i class="fas fa-chart-bar me-1"></i>Dashboard
                         </a>
@@ -487,6 +497,11 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('users') }}">
                             <i class="fas fa-users me-1"></i>Users
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('barangays') }}">
+                            <i class="fas fa-building me-1"></i>Barangays
                         </a>
                     </li>
                     {% endif %}

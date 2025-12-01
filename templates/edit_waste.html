@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Add Waste Item - Waste Management System{% endblock %}
+{% block title %}Edit Waste Item - Waste Management System{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -9,18 +9,18 @@
             <!-- Header Section -->
             <div class="text-center mb-5">
                 <h1 class="display-5 fw-bold text-dark mb-3">
-                    <i class="fas fa-plus-circle me-3 text-primary"></i>Register Waste for Collection
+                    <i class="fas fa-edit me-3 text-primary"></i>Edit Waste Item
                 </h1>
-                <p class="lead text-muted">Register new waste items for collection and tracking</p>
+                <p class="lead text-muted">Update waste item information</p>
             </div>
             
             <!-- Main Form Card -->
             <div class="card border-0 shadow-lg">
                 <div class="card-header bg-gradient-primary text-white text-center py-4">
                     <h4 class="mb-0 fw-bold">
-                        <i class="fas fa-recycle me-2"></i>Waste Registration Form
+                        <i class="fas fa-recycle me-2"></i>Edit Waste Item Form
                     </h4>
-                    <p class="mb-0 mt-2 opacity-75">Fill in the details below to register a new waste item</p>
+                    <p class="mb-0 mt-2 opacity-75">Update the details below to modify the waste item</p>
                 </div>
                 <div class="card-body p-5">
                     <form method="POST" id="wasteForm">
@@ -32,12 +32,12 @@
                                 </label>
                                 <select class="form-select form-select-lg" id="waste_type" name="waste_type" required>
                                     <option value="">Choose the type of waste...</option>
-                                    <option value="recyclable">♻️ Recyclable</option>
-                                    <option value="hazardous">⚠️ Hazardous</option>
-                                    <option value="organic">🌱 Organic</option>
-                                    <option value="electronic">💻 Electronic</option>
-                                    <option value="medical">🏥 Medical</option>
-                                    <option value="other">❓ Other</option>
+                                    <option value="recyclable" {{ 'selected' if waste_item.waste_type == 'recyclable' else '' }}>♻️ Recyclable</option>
+                                    <option value="hazardous" {{ 'selected' if waste_item.waste_type == 'hazardous' else '' }}>⚠️ Hazardous</option>
+                                    <option value="organic" {{ 'selected' if waste_item.waste_type == 'organic' else '' }}>🌱 Organic</option>
+                                    <option value="electronic" {{ 'selected' if waste_item.waste_type == 'electronic' else '' }}>💻 Electronic</option>
+                                    <option value="medical" {{ 'selected' if waste_item.waste_type == 'medical' else '' }}>🏥 Medical</option>
+                                    <option value="other" {{ 'selected' if waste_item.waste_type == 'other' else '' }}>❓ Other</option>
                                 </select>
                                 <div class="form-text">
                                     <i class="fas fa-info-circle me-1"></i>
@@ -57,7 +57,8 @@
                                     <option value="">Choose your barangay...</option>
                                     {% for barangay in barangays %}
                                     <option value="{{ barangay.id }}" 
-                                            {% if user_barangay_id and barangay.id == user_barangay_id %}selected{% endif %}>
+                                            {% if user_barangay_id and barangay.id == user_barangay_id %}selected
+                                            {% elif not user_barangay_id and waste_item.barangay_id == barangay.id %}selected{% endif %}>
                                         {{ barangay.name }}
                                     </option>
                                     {% endfor %}
@@ -85,7 +86,7 @@
                                 </label>
                                 <div class="input-group">
                                     <input type="number" class="form-control form-control-lg" id="weight" name="weight" 
-                                           step="0.01" min="0" placeholder="0.00">
+                                           step="0.01" min="0" placeholder="0.00" value="{{ waste_item.weight or '' }}">
                                     <span class="input-group-text bg-light">kg</span>
                                 </div>
                                 <div class="form-text">
@@ -99,7 +100,7 @@
                                 </label>
                                 <div class="input-group">
                                     <input type="number" class="form-control form-control-lg" id="quantity" name="quantity" 
-                                           min="1" placeholder="1">
+                                           min="1" placeholder="1" value="1">
                                     <span class="input-group-text bg-light">items</span>
                                 </div>
                                 <div class="form-text">
@@ -113,14 +114,32 @@
                         <div class="row mb-4">
                             <div class="col-12">
                                 <label for="address" class="form-label fw-bold text-dark mb-3">
-                                    <i class="fas fa-map-marker-alt me-2 text-primary"></i>Specific Collection Address *
+                                    <i class="fas fa-map-marker-alt me-2 text-primary"></i>Collection Address *
                                 </label>
                                 <textarea class="form-control form-control-lg" id="address" name="address" rows="3" 
-                                          placeholder="Enter the specific address where the waste should be collected..." required></textarea>
+                                          placeholder="Enter the specific address where the waste should be collected..." required>{{ waste_item.address or '' }}</textarea>
                                 <div class="form-text">
                                     <i class="fas fa-home me-1"></i>
                                     Provide detailed address for collection team
                                 </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Contact Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="contact_person" class="form-label fw-bold text-dark mb-3">
+                                    <i class="fas fa-user me-2 text-primary"></i>Contact Person
+                                </label>
+                                <input type="text" class="form-control form-control-lg" id="contact_person" name="contact_person" 
+                                       placeholder="Contact person name" value="{{ waste_item.contact_person or '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="contact_number" class="form-label fw-bold text-dark mb-3">
+                                    <i class="fas fa-phone me-2 text-primary"></i>Contact Number
+                                </label>
+                                <input type="text" class="form-control form-control-lg" id="contact_number" name="contact_number" 
+                                       placeholder="Phone number" value="{{ waste_item.contact_number or '' }}">
                             </div>
                         </div>
                         
@@ -131,7 +150,7 @@
                                     <i class="fas fa-align-left me-2 text-primary"></i>Description
                                 </label>
                                 <textarea class="form-control form-control-lg" id="description" name="description" rows="3" 
-                                          placeholder="Additional details about the waste item (optional)..."></textarea>
+                                          placeholder="Additional details about the waste item (optional)...">{{ waste_item.description or '' }}</textarea>
                                 <div class="form-text">
                                     <i class="fas fa-info-circle me-1"></i>
                                     Any additional information about the waste item
@@ -147,8 +166,8 @@
                                 </label>
                                 <select class="form-select form-select-lg" id="is_sorted" name="is_sorted" required>
                                     <option value="">Choose sorting status...</option>
-                                    <option value="true">✅ Sorted - Waste is properly sorted and ready for collection</option>
-                                    <option value="false">❌ Not Sorted - Waste needs to be sorted before collection</option>
+                                    <option value="true" {{ 'selected' if waste_item.is_sorted else '' }}>✅ Sorted - Waste is properly sorted and ready for collection</option>
+                                    <option value="false" {{ 'selected' if not waste_item.is_sorted else '' }}>❌ Not Sorted - Waste needs to be sorted before collection</option>
                                 </select>
                                 <div class="form-text">
                                     <i class="fas fa-info-circle me-1"></i>
@@ -161,12 +180,12 @@
                         <div class="row">
                             <div class="col-12">
                                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-lg px-4 me-md-2">
+                                    <a href="{{ url_for('view_item', item_id=waste_item.item_id) }}" class="btn btn-outline-secondary btn-lg px-4 me-md-2">
                                         <i class="fas fa-arrow-left me-2"></i>Cancel
                                     </a>
                                     <button type="submit" class="btn btn-primary btn-lg px-5" id="submitBtn">
                                         <span class="btn-text">
-                                            <i class="fas fa-save me-2"></i>Register Waste Item
+                                            <i class="fas fa-save me-2"></i>Update Waste Item
                                         </span>
                                         <span class="loading d-none">
                                             <div class="loading"></div>
@@ -183,32 +202,13 @@
             <div class="card mt-4 border-0 shadow-sm">
                 <div class="card-header bg-info text-white text-center py-3">
                     <h6 class="mb-0 fw-bold">
-                        <i class="fas fa-info-circle me-2"></i>Registration Information
+                        <i class="fas fa-info-circle me-2"></i>Edit Information
                     </h6>
                 </div>
                 <div class="card-body p-4">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="text-center p-3">
-                                <i class="fas fa-qrcode fa-2x text-primary mb-2"></i>
-                                <h6 class="fw-bold">QR Code Generated</h6>
-                                <p class="small text-muted mb-0">A unique QR code will be created for tracking</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="text-center p-3">
-                                <i class="fas fa-truck fa-2x text-info mb-2"></i>
-                                <h6 class="fw-bold">Collection Scheduled</h6>
-                                <p class="small text-muted mb-0">Collection team will be notified automatically</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="text-center p-3">
-                                <i class="fas fa-chart-line fa-2x text-warning mb-2"></i>
-                                <h6 class="fw-bold">Track Progress</h6>
-                                <p class="small text-muted mb-0">Monitor collection status in real-time</p>
-                            </div>
-                        </div>
+                    <div class="alert alert-warning mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Note:</strong> You can only edit waste items that have not been collected yet. Once an item is collected or processed, it cannot be edited.
                     </div>
                 </div>
             </div>
@@ -275,3 +275,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
+

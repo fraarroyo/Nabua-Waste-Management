@@ -67,8 +67,11 @@
                             <div class="card-body">
                                 <form id="manual-scan-form">
                                     <div class="mb-3">
-                                        <label for="qr-data" class="form-label">QR Code Data</label>
-                                        <textarea class="form-control" id="qr-data" rows="4" placeholder="Paste QR code data here or scan with camera"></textarea>
+                                        <label for="qr-data" class="form-label">QR Code Data or Item ID</label>
+                                        <textarea class="form-control" id="qr-data" rows="4" placeholder="Enter item ID (e.g., WM20241201120000) or paste full QR code JSON data here"></textarea>
+                                        <small class="form-text text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>You can enter just the Item ID (e.g., WM20241201120000) or the full QR code JSON data.
+                                        </small>
                                     </div>
                                     <button type="submit" class="btn btn-success w-100">
                                         <i class="fas fa-search me-2"></i>Lookup Item
@@ -96,8 +99,8 @@
 </div>
 
 <!-- Status Update Modal -->
-<div class="modal fade" id="statusUpdateModal" tabindex="-1">
-    <div class="modal-dialog">
+<div class="modal fade" id="statusUpdateModal" tabindex="-1" aria-labelledby="statusUpdateModalLabel" aria-hidden="true" data-bs-backdrop="true" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Update Item Status</h5>
@@ -275,33 +278,40 @@ document.getElementById('manual-scan-form').addEventListener('submit', (e) => {
 function processQRData(qrData) {
     console.log('Processing QR data:', qrData);
     
-    // Try to parse as JSON first (for our generated QR codes)
-    let parsedData;
-    try {
-        parsedData = JSON.parse(qrData);
-    } catch (e) {
-        // If not JSON, treat as plain text (could be just the item ID)
-        parsedData = qrData;
+    if (!qrData || qrData.trim() === '') {
+        alert('Please enter QR code data');
+        return;
     }
+    
+    // Show loading state
+    const resultsDiv = document.getElementById('scan-results');
+    const contentDiv = document.getElementById('scan-results-content');
+    contentDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2">Looking up item...</p></div>';
+    resultsDiv.style.display = 'block';
     
     fetch('/scan_qr', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ qr_data: qrData })
+        body: JSON.stringify({ qr_data: qrData.trim() })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             displayScanResults(data.item);
         } else {
-            alert('Error: ' + data.error);
+            contentDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i><strong>Error:</strong> ${data.error || 'Failed to lookup item'}</div>`;
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error processing QR code data');
+        contentDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i><strong>Error:</strong> Failed to process QR code data. Please try again.</div>`;
     });
 }
 
@@ -310,25 +320,43 @@ function displayScanResults(item) {
     const resultsDiv = document.getElementById('scan-results');
     const contentDiv = document.getElementById('scan-results-content');
     
+    // Escape HTML to prevent XSS
+    const escapeHtml = (text) => {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    };
+    
+    // Escape for display
+    const itemId = escapeHtml(item.item_id || 'N/A');
+    const itemName = escapeHtml(item.item_name || 'N/A');
+    const wasteType = escapeHtml(item.waste_type || 'N/A');
+    const statusDisplay = escapeHtml(item.status || 'N/A');
+    const addressDisplay = escapeHtml(item.address || item.location || 'N/A');
+    const barangay = escapeHtml(item.barangay || 'N/A');
+    
+    // Raw values for data attributes (not escaped)
+    const rawItemId = item.item_id || '';
+    const rawStatus = item.status || '';
+    const rawAddress = (item.address || item.location || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    
     contentDiv.innerHTML = `
         <div class="row">
             <div class="col-md-6">
-                <h6>Item Information</h6>
-                <table class="table table-sm">
-                    <tr><td><strong>Item ID:</strong></td><td><code>${item.item_id}</code></td></tr>
-                    <tr><td><strong>Name:</strong></td><td>${item.item_name}</td></tr>
-                    <tr><td><strong>Type:</strong></td><td><span class="badge bg-primary">${item.waste_type}</span></td></tr>
-                    <tr><td><strong>Status:</strong></td><td><span class="badge bg-warning">${item.status.replace('_', ' ')}</span></td></tr>
-                    <tr><td><strong>Location:</strong></td><td>${item.location || 'N/A'}</td></tr>
+                <h6><i class="fas fa-info-circle me-2"></i>Item Information</h6>
+                <table class="table table-sm table-bordered">
+                    <tr><td><strong>Item ID:</strong></td><td><code>${itemId}</code></td></tr>
+                    <tr><td><strong>Name:</strong></td><td>${itemName}</td></tr>
+                    <tr><td><strong>Type:</strong></td><td><span class="badge bg-primary">${wasteType}</span></td></tr>
+                    <tr><td><strong>Status:</strong></td><td><span class="badge bg-warning">${statusDisplay.replace(/_/g, ' ')}</span></td></tr>
+                    <tr><td><strong>Barangay:</strong></td><td>${barangay}</td></tr>
+                    <tr><td><strong>Address:</strong></td><td>${addressDisplay}</td></tr>
                 </table>
             </div>
             <div class="col-md-6">
-                <h6>Actions</h6>
+                <h6><i class="fas fa-tasks me-2"></i>Actions</h6>
                 <div class="d-grid gap-2">
-                    <button class="btn btn-primary" onclick="openStatusUpdateModal('${item.item_id}')">
-                        <i class="fas fa-edit me-2"></i>Update Status
-                    </button>
-                    <a href="/item/${item.item_id}" class="btn btn-outline-primary">
+                    <a href="/item/${itemId}" class="btn btn-outline-primary">
                         <i class="fas fa-eye me-2"></i>View Details
                     </a>
                 </div>
@@ -339,29 +367,263 @@ function displayScanResults(item) {
     resultsDiv.style.display = 'block';
 }
 
-// Open status update modal
-function openStatusUpdateModal(itemId) {
-    document.getElementById('item-id').value = itemId;
-    const modal = new bootstrap.Modal(document.getElementById('statusUpdateModal'));
-    modal.show();
+// Open status update modal from button (using data attributes)
+function openStatusUpdateModalFromButton(button) {
+    const itemId = button.getAttribute('data-item-id');
+    const currentStatus = button.getAttribute('data-current-status');
+    const currentAddress = button.getAttribute('data-current-address');
+    openStatusUpdateModal(itemId, currentStatus, currentAddress);
 }
 
-// Update status
-document.getElementById('update-status-btn').addEventListener('click', () => {
-    const form = document.getElementById('status-update-form');
-    const formData = new FormData(form);
+// Open status update modal
+function openStatusUpdateModal(itemId, currentStatus, currentAddress) {
+    // Set the item ID
+    document.getElementById('item-id').value = itemId;
     
-    fetch(`/update_status/${formData.get('item_id')}`, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => {
-        if (response.ok) {
-            location.reload();
+    // Pre-select the current status in the dropdown
+    const statusSelect = document.getElementById('new-status');
+    if (statusSelect && currentStatus) {
+        // Convert status format (e.g., "pending_collection" or "PENDING COLLECTION")
+        // Handle both formats: "pending_collection" and "pending collection"
+        let normalizedStatus = currentStatus.toLowerCase().replace(/\s+/g, '_');
+        // Decode HTML entities
+        normalizedStatus = normalizedStatus
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/&amp;/g, '&');
+        
+        // Set the value if it exists in the dropdown
+        if (statusSelect.querySelector(`option[value="${normalizedStatus}"]`)) {
+            statusSelect.value = normalizedStatus;
         } else {
-            alert('Error updating status');
+            // Try to find a matching option
+            const options = Array.from(statusSelect.options);
+            const matchingOption = options.find(opt => {
+                const optValue = opt.value.toLowerCase();
+                return optValue === normalizedStatus || 
+                       optValue.replace(/_/g, ' ') === normalizedStatus.replace(/_/g, ' ');
+            });
+            if (matchingOption) {
+                statusSelect.value = matchingOption.value;
+            }
         }
+    }
+    
+    // Pre-fill the location field with current address
+    const locationInput = document.getElementById('update-location');
+    if (locationInput) {
+        if (currentAddress && currentAddress !== 'N/A' && currentAddress !== '') {
+            // Decode HTML entities
+            const decodedAddress = currentAddress
+                .replace(/&quot;/g, '"')
+                .replace(/&#39;/g, "'")
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>');
+            locationInput.value = decodedAddress;
+        } else {
+            locationInput.value = '';
+        }
+    }
+    
+    // Clear notes field
+    const notesTextarea = document.getElementById('update-notes');
+    if (notesTextarea) {
+        notesTextarea.value = '';
+    }
+    
+    // Clean modal configuration
+    const modalElement = document.getElementById('statusUpdateModal');
+    
+    // Dispose of any existing modal instance
+    const existingModal = bootstrap.Modal.getInstance(modalElement);
+    if (existingModal) {
+        existingModal.dispose();
+    }
+    
+    // Ensure all form fields are enabled
+    const formElements = modalElement.querySelectorAll('input, select, textarea, button');
+    formElements.forEach(el => {
+        el.disabled = false;
+        el.readOnly = false;
+        el.removeAttribute('disabled');
+        el.removeAttribute('readonly');
     });
+    
+    // Create new modal instance with standard Bootstrap configuration
+    const modal = new bootstrap.Modal(modalElement, {
+        backdrop: true,
+        keyboard: true,
+        focus: true
+    });
+    
+    // Show the modal
+    modal.show();
+    
+    // Function to fix z-index and pointer events
+    const fixModalLayering = () => {
+        // Force backdrop to be behind modal (lower z-index)
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+            backdrop.style.setProperty('z-index', '1040', 'important');
+            backdrop.style.position = 'fixed';
+            // Ensure backdrop doesn't block modal area - but still blocks background
+            backdrop.style.pointerEvents = 'auto';
+        }
+        
+        // Force modal to be above backdrop (higher z-index)
+        modalElement.style.setProperty('z-index', '1055', 'important');
+        modalElement.style.position = 'fixed';
+        modalElement.style.display = 'block';
+        modalElement.style.pointerEvents = 'auto';
+        
+        // Ensure modal dialog and content are also above
+        const modalDialog = modalElement.querySelector('.modal-dialog');
+        if (modalDialog) {
+            modalDialog.style.setProperty('z-index', '1056', 'important');
+            modalDialog.style.position = 'relative';
+            modalDialog.style.pointerEvents = 'auto';
+        }
+        const modalContent = modalElement.querySelector('.modal-content');
+        if (modalContent) {
+            modalContent.style.setProperty('z-index', '1057', 'important');
+            modalContent.style.position = 'relative';
+            modalContent.style.pointerEvents = 'auto';
+        }
+        
+        // Ensure form elements are editable and on top
+        const allInputs = modalElement.querySelectorAll('input, select, textarea, button');
+        allInputs.forEach(input => {
+            input.disabled = false;
+            input.readOnly = false;
+            input.style.setProperty('z-index', '1058', 'important');
+            input.style.position = 'relative';
+            input.style.pointerEvents = 'auto';
+        });
+        
+        // Ensure modal sections are interactive
+        const modalBody = modalElement.querySelector('.modal-body');
+        const modalHeader = modalElement.querySelector('.modal-header');
+        const modalFooter = modalElement.querySelector('.modal-footer');
+        [modalBody, modalHeader, modalFooter].forEach(section => {
+            if (section) {
+                section.style.pointerEvents = 'auto';
+                section.style.position = 'relative';
+                section.style.zIndex = '1057';
+            }
+        });
+    };
+    
+    // Fix immediately when modal starts showing
+    modalElement.addEventListener('show.bs.modal', function() {
+        fixModalLayering();
+    }, { once: true });
+    
+    // Fix after modal is fully shown
+    modalElement.addEventListener('shown.bs.modal', function() {
+        fixModalLayering();
+        // Also fix after a short delay to catch any late backdrop creation
+        setTimeout(fixModalLayering, 50);
+        setTimeout(fixModalLayering, 100);
+    }, { once: true });
+}
+
+// Update status - use event delegation to handle button clicks
+// This works even if the modal is dynamically shown/hidden
+document.addEventListener('click', function(e) {
+    // Check if the clicked element is the update status button
+    if (e.target && (e.target.id === 'update-status-btn' || e.target.closest('#update-status-btn'))) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const updateButton = e.target.id === 'update-status-btn' ? e.target : e.target.closest('#update-status-btn');
+        const form = document.getElementById('status-update-form');
+        
+        if (!form) {
+            alert('Form not found');
+            return;
+        }
+        
+        const formData = new FormData(form);
+        const itemId = formData.get('item_id');
+        const status = formData.get('status');
+        
+        if (!itemId) {
+            alert('Item ID is missing');
+            return;
+        }
+        
+        if (!status) {
+            alert('Please select a status');
+            const statusSelect = document.getElementById('new-status');
+            if (statusSelect) {
+                statusSelect.focus();
+            }
+            return;
+        }
+        
+        // Show loading state
+        const originalText = updateButton.innerHTML;
+        updateButton.disabled = true;
+        updateButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Updating...';
+        
+        // Send request
+        fetch(`/update_status/${itemId}`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        })
+        .then(response => {
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                // Check if response is an error
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Update failed');
+                    });
+                }
+                return response.json();
+            } else {
+                // Handle HTML redirect response
+                if (response.ok || response.redirected) {
+                    return { success: true, message: 'Status updated successfully!' };
+                } else {
+                    return response.text().then(text => {
+                        throw new Error('Update failed: ' + text);
+                    });
+                }
+            }
+        })
+        .then(data => {
+            if (data && data.success) {
+                // Close the modal
+                const modalElement = document.getElementById('statusUpdateModal');
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    modal.hide();
+                }
+                
+                // Show success message
+                alert(data.message || 'Status updated successfully!');
+                
+                // Reload the page to show updated status
+                setTimeout(() => {
+                    location.reload();
+                }, 500);
+            } else {
+                throw new Error(data?.error || 'Update failed');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating status:', error);
+            updateButton.disabled = false;
+            updateButton.innerHTML = originalText;
+            alert('Error updating status: ' + (error.message || 'Please try again.'));
+        });
+    }
 });
 
 // Clean up on page unload
@@ -369,7 +631,7 @@ window.addEventListener('beforeunload', () => {
     stopQRScanning();
 });
 
-// Add some CSS for the scanner overlay
+// Clean CSS for scanner and modal
 const style = document.createElement('style');
 style.textContent = `
     .scanner-overlay {
@@ -392,6 +654,66 @@ style.textContent = `
     @keyframes scan {
         0% { transform: translateY(-100px); }
         100% { transform: translateY(100px); }
+    }
+    /* CRITICAL: Ensure backdrop is BEHIND modal and doesn't block it */
+    .modal-backdrop {
+        z-index: 1040 !important;
+        position: fixed !important;
+        pointer-events: auto !important;
+    }
+    /* CRITICAL: Ensure modal is ABOVE backdrop and receives pointer events */
+    #statusUpdateModal {
+        z-index: 1055 !important;
+        position: fixed !important;
+        pointer-events: auto !important;
+    }
+    #statusUpdateModal.show {
+        z-index: 1055 !important;
+        pointer-events: auto !important;
+    }
+    #statusUpdateModal .modal-dialog {
+        z-index: 1056 !important;
+        position: relative !important;
+        pointer-events: auto !important;
+    }
+    #statusUpdateModal .modal-content {
+        z-index: 1057 !important;
+        position: relative !important;
+        pointer-events: auto !important;
+        background: white !important;
+    }
+    /* Ensure form elements are editable and on top */
+    #statusUpdateModal input,
+    #statusUpdateModal select,
+    #statusUpdateModal textarea,
+    #statusUpdateModal button {
+        pointer-events: auto !important;
+        z-index: 1058 !important;
+        position: relative !important;
+        cursor: text !important;
+    }
+    #statusUpdateModal select {
+        cursor: pointer !important;
+    }
+    #statusUpdateModal button {
+        cursor: pointer !important;
+    }
+    /* Ensure modal body, header, footer are interactive */
+    #statusUpdateModal .modal-body,
+    #statusUpdateModal .modal-header,
+    #statusUpdateModal .modal-footer {
+        z-index: 1057 !important;
+        position: relative !important;
+        pointer-events: auto !important;
+    }
+    /* Prevent any overlay from blocking the modal */
+    #statusUpdateModal::before,
+    #statusUpdateModal::after {
+        display: none !important;
+    }
+    #statusUpdateModal .modal-content::before,
+    #statusUpdateModal .modal-content::after {
+        display: none !important;
     }
 `;
 document.head.appendChild(style);

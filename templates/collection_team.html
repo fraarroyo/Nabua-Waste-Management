@@ -209,4 +209,118 @@
     </div>
 </div>
 {% endif %}
+
+<!-- Status Updates Section -->
+{% if status_updates %}
+<!-- Status Updates Statistics -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h3>{{ status_updates|selectattr('status', 'equalto', 'collected')|list|length }}</h3>
+                <p class="mb-0">Collected</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h3>{{ status_updates|selectattr('status', 'equalto', 'in_transit')|list|length }}</h3>
+                <p class="mb-0">In Transit</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h3>{{ status_updates|selectattr('status', 'equalto', 'processed')|list|length }}</h3>
+                <p class="mb-0">Processed</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-dark text-white">
+            <div class="card-body text-center">
+                <h3>{{ status_updates|selectattr('status', 'equalto', 'disposed')|list|length }}</h3>
+                <p class="mb-0">Disposed</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-info">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-history me-2"></i>All Status Updates
+                </h4>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">All items with status updates made by the collection team.</p>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Item ID</th>
+                                <th>Item Name</th>
+                                <th>Barangay</th>
+                                <th>Address</th>
+                                <th>Current Status</th>
+                                <th>Waste Type</th>
+                                <th>Last Updated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in status_updates %}
+                            <tr>
+                                <td><code>{{ item.item_id }}</code></td>
+                                <td>{{ item.item_name }}</td>
+                                <td>
+                                    <span class="badge bg-primary">{{ item.barangay.name }}</span>
+                                </td>
+                                <td>{{ item.address }}</td>
+                                <td>
+                                    {% if item.status == 'collected' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-circle me-1"></i>Collected
+                                        </span>
+                                    {% elif item.status == 'in_transit' %}
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-truck me-1"></i>In Transit
+                                        </span>
+                                    {% elif item.status == 'processed' %}
+                                        <span class="badge bg-primary">
+                                            <i class="fas fa-cog me-1"></i>Processed
+                                        </span>
+                                    {% elif item.status == 'disposed' %}
+                                        <span class="badge bg-dark">
+                                            <i class="fas fa-trash me-1"></i>Disposed
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ item.status.replace('_', ' ').title() }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge waste-type-badge bg-{{ 'primary' if item.waste_type == 'recyclable' else 'danger' if item.waste_type == 'hazardous' else 'success' if item.waste_type == 'organic' else 'secondary' }}">
+                                        {{ item.waste_type.title() }}
+                                    </span>
+                                </td>
+                                <td>{{ item.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    <a href="{{ url_for('view_item', item_id=item.item_id) }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>View Details
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}

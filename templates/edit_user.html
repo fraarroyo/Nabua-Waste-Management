@@ -92,6 +92,29 @@
                             </div>
                         </div>
 
+                        <!-- Barangay Selection (only for barangay role) -->
+                        <div class="mb-3" id="barangay-field" style="display: {% if user.role == 'barangay' %}block{% else %}none{% endif %};">
+                            <label for="barangay_id" class="form-label">
+                                <i class="fas fa-map-marker-alt me-1"></i>Barangay <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="barangay_id" name="barangay_id">
+                                <option value="">Select Barangay</option>
+                                {% if barangays %}
+                                    {% for barangay in barangays %}
+                                    <option value="{{ barangay.id }}" {% if user.barangay_id == barangay.id %}selected{% endif %}>
+                                        {{ barangay.name }}
+                                    </option>
+                                    {% endfor %}
+                                {% else %}
+                                    <option value="" disabled>No barangays available. Please sync barangays first.</option>
+                                {% endif %}
+                            </select>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Select the barangay this user belongs to. This will be used to pre-fill the location when adding waste items.
+                            </div>
+                        </div>
+
                         <div class="row">
                             <div class="col-12">
                                 <div class="mb-3">
@@ -139,6 +162,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const emailInput = document.getElementById('email');
     const fullNameInput = document.getElementById('full_name');
     const roleSelect = document.getElementById('role');
+    const barangayField = document.getElementById('barangay-field');
+    const barangaySelect = document.getElementById('barangay_id');
+    
+    // Show/hide barangay field based on role
+    roleSelect.addEventListener('change', function() {
+        if (this.value === 'barangay') {
+            barangayField.style.display = 'block';
+            barangaySelect.setAttribute('required', 'required');
+        } else {
+            barangayField.style.display = 'none';
+            barangaySelect.removeAttribute('required');
+            barangaySelect.value = '';
+        }
+    });
     
     form.addEventListener('submit', function(e) {
         let isValid = true;
@@ -169,6 +206,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Validate role
         if (!roleSelect.value) {
             showError(roleSelect, 'Please select a role');
+            isValid = false;
+        }
+        
+        // Validate barangay if role is barangay
+        if (roleSelect.value === 'barangay' && !barangaySelect.value) {
+            showError(barangaySelect, 'Please select a barangay');
             isValid = false;
         }
         

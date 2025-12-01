@@ -12,14 +12,21 @@
             <p class="lead">Track and manage waste collection across barangays with QR code technology</p>
             <hr class="my-4">
             <p>Monitor waste collection status, track items by barangay, and ensure efficient waste disposal across Nabua, Camarines Sur.</p>
+            {% if session.role != 'collector' %}
             <a class="btn btn-light btn-lg" href="{{ url_for('add_waste') }}" role="button">
                 <i class="fas fa-plus me-2"></i>Register Waste Item
             </a>
+            {% else %}
+            <a class="btn btn-light btn-lg" href="{{ url_for('scan_qr') }}" role="button">
+                <i class="fas fa-qrcode me-2"></i>Scan QR Codes
+            </a>
+            {% endif %}
         </div>
     </div>
 </div>
 
 <div class="row">
+    {% if session.role != 'collector' %}
     <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
@@ -30,6 +37,8 @@
             </div>
         </div>
     </div>
+    {% endif %}
+    {% if session.role != 'collector' %}
     <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
@@ -40,6 +49,8 @@
             </div>
         </div>
     </div>
+    {% endif %}
+    {% if session.role != 'barangay' %}
     <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
@@ -50,6 +61,8 @@
             </div>
         </div>
     </div>
+    {% endif %}
+    {% if session.role != 'collector' %}
     <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
@@ -60,16 +73,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <i class="fas fa-chart-bar fa-3x text-primary mb-3"></i>
-                <h5 class="card-title">Dashboard</h5>
-                <p class="card-text">View municipal waste analytics</p>
-                <a href="{{ url_for('dashboard') }}" class="btn btn-primary">View Dashboard</a>
-            </div>
-        </div>
-    </div>
+    {% endif %}
 </div>
 
 <!-- Statistics Cards -->
@@ -193,9 +197,11 @@
                                     <a href="{{ url_for('view_item', item_id=item.item_id) }}" class="btn btn-outline-primary">
                                         <i class="fas fa-eye"></i>
                                     </a>
+                                    {% if session.role != 'collector' %}
                                     <a href="{{ url_for('generate_qr', item_id=item.item_id) }}" class="btn btn-outline-success">
                                         <i class="fas fa-qrcode"></i>
                                     </a>
+                                    {% endif %}
                                     {% if session.user_role == 'admin' or item.created_by == session.user_id %}
                                     <button class="btn btn-outline-danger" onclick="deleteWasteItem('{{ item.item_id }}', '{{ item.item_name }}')">
                                         <i class="fas fa-trash"></i>
