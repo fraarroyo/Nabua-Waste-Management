@@ -5,20 +5,46 @@
 {% block content %}
 <div class="row">
     <div class="col-12">
-        <div class="jumbotron text-white p-5 rounded mb-4" style="background: var(--gradient-primary);">
+        <div class="jumbotron text-white p-5 rounded mb-4" style="background: var(--navbar-gradient);">
             <h1 class="display-4">
-                <i class="fas fa-recycle me-3"></i>Nabua Waste Management System
+                {% if session.role == 'admin' %}
+                    <i class="fas fa-shield-alt me-3"></i>Admin Portal
+                {% elif session.role == 'collector' %}
+                    <i class="fas fa-truck me-3"></i>Collection Team Portal
+                {% else %}
+                    <i class="fas fa-leaf me-3"></i>Barangay Portal
+                {% endif %}
             </h1>
-            <p class="lead">Track and manage waste collection across barangays with QR code technology</p>
-            <hr class="my-4">
-            <p>Monitor waste collection status, track items by barangay, and ensure efficient waste disposal across Nabua, Camarines Sur.</p>
-            {% if session.role != 'collector' %}
+            <p class="lead">
+                {% if session.role == 'admin' %}
+                    Manage the entire waste management system with full administrative control
+                {% elif session.role == 'collector' %}
+                    Track and collect waste items efficiently with QR code scanning
+                {% else %}
+                    Register and track your barangay's waste items
+                {% endif %}
+            </p>
+            <hr class="my-4" style="border-color: rgba(255, 255, 255, 0.3);">
+            <p>
+                {% if session.role == 'admin' %}
+                    Monitor waste collection status, manage users and barangays, and ensure efficient waste disposal across Nabua, Camarines Sur.
+                {% elif session.role == 'collector' %}
+                    Scan QR codes to update waste status, view collection routes, and track items from collection to disposal.
+                {% else %}
+                    Register waste items, track their collection status, and help maintain a clean environment in your barangay.
+                {% endif %}
+            </p>
+            {% if session.role == 'barangay' %}
             <a class="btn btn-light btn-lg" href="{{ url_for('add_waste') }}" role="button">
                 <i class="fas fa-plus me-2"></i>Register Waste Item
             </a>
-            {% else %}
+            {% elif session.role == 'collector' %}
             <a class="btn btn-light btn-lg" href="{{ url_for('scan_qr') }}" role="button">
                 <i class="fas fa-qrcode me-2"></i>Scan QR Codes
+            </a>
+            {% else %}
+            <a class="btn btn-light btn-lg" href="{{ url_for('dashboard') }}" role="button">
+                <i class="fas fa-chart-bar me-2"></i>View Dashboard
             </a>
             {% endif %}
         </div>
@@ -38,7 +64,7 @@
         </div>
     </div>
     {% endif %}
-    {% if session.role != 'collector' %}
+    {% if session.role == 'barangay' %}
     <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
@@ -216,7 +242,10 @@
             </div>
         {% else %}
             <div class="alert alert-info">
-                <i class="fas fa-info-circle me-2"></i>No waste items found. <a href="{{ url_for('add_waste') }}">Add your first waste item</a> to get started.
+                <i class="fas fa-info-circle me-2"></i>No waste items found.
+                {% if session.role == 'barangay' %}
+                <a href="{{ url_for('add_waste') }}">Add your first waste item</a> to get started.
+                {% endif %}
             </div>
         {% endif %}
     </div>
