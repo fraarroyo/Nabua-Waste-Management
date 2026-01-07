@@ -32,18 +32,33 @@
                             <div class="card-body">
                                 {% if qr_scanning_available %}
                                     <div id="scanner-container" class="text-center">
-                                        <video id="video" width="100%" height="300" style="border: 1px solid #ddd;"></video>
+                                        <video id="video" width="100%" height="300" playsinline muted style="border: 1px solid #ddd;"></video>
                                         <div id="scanner-overlay" class="scanner-overlay">
                                             <div class="scanner-line"></div>
                                         </div>
                                     </div>
                                     <div class="mt-3 text-center">
-                                        <button id="start-scanner" class="btn btn-primary">
-                                            <i class="fas fa-camera me-2"></i>Start Scanner
-                                        </button>
-                                        <button id="stop-scanner" class="btn btn-secondary" style="display: none;">
-                                            <i class="fas fa-stop me-2"></i>Stop Scanner
-                                        </button>
+                                        <div class="row g-2 align-items-center">
+                                            <div class="col-auto">
+                                                <select id="video-device-select" class="form-select" style="min-width: 240px; display: none;"></select>
+                                            </div>
+                                            <div class="col-auto">
+                                                <button id="refresh-devices" class="btn btn-sm btn-outline-secondary" title="Refresh camera list" style="display:none;">Refresh</button>
+                                            </div>
+                                            <div class="col-auto">
+                                                <button id="start-scanner" class="btn btn-primary">
+                                                    <i class="fas fa-camera me-2"></i>Start Scanner
+                                                </button>
+                                            </div>
+                                            <div class="col-auto">
+                                                <button id="stop-scanner" class="btn btn-secondary" style="display: none;">
+                                                    <i class="fas fa-stop me-2"></i>Stop Scanner
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div id="camera-diagnostics" class="mt-3 text-start" style="display:none;">
+                                            <!-- Diagnostic text will be inserted here -->
+                                        </div>
                                     </div>
                                 {% else %}
                                     <div class="alert alert-warning">
@@ -139,8 +154,15 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- Include jsQR library for QR code scanning -->
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<!-- Include jsQR library for QR code scanning (CDN with local fallback) -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" onerror="(function(){
+    console.warn('jsQR CDN failed to load; loading local fallback.');
+    // Prefer the full local copy when available
+    var s = document.createElement('script'); s.src = '/static/vendor/js/jsQR.full.js'; document.head.appendChild(s);
+})();"></script>
+<noscript>
+  <!-- If JS disabled, nothing to do for scanning -->
+</noscript>
 
 <script>
 let stream = null;
@@ -149,72 +171,203 @@ let scanInterval = null;
 
 // Start camera scanner (only if available)
 {% if qr_scanning_available %}
-        document.getElementById('start-scanner').addEventListener('click', async () => {
-            try {
-                // Check if getUserMedia is available
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    throw new Error('Camera access not supported in this browser.');
+        (function() {
+            const startBtn = document.getElementById('start-scanner');
+            const deviceSelect = document.getElementById('video-device-select');
+            const refreshBtn = document.getElementById('refresh-devices');
+            const diag = document.getElementById('camera-diagnostics');
+
+            const showDiag = (html) => {
+                if (!diag) return;
+                diag.style.display = 'block';
+                diag.innerHTML = html;
+            };
+
+            const listDevices = async () => {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+                    showDiag('<div class="alert alert-info">Cannot enumerate devices in this browser.</div>');
+                    return [];
+                }
+                try {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const videoInputs = devices.filter(d => d.kind === 'videoinput');
+
+                    if (videoInputs.length === 0) {
+                        showDiag('<div class="alert alert-warning">No camera devices detected.</div>');
+                    } else {
+                        if (deviceSelect) {
+                            deviceSelect.style.display = 'inline-block';
+                            deviceSelect.innerHTML = '';
+                            videoInputs.forEach((d, idx) => {
+                                const label = d.label || `Camera ${idx + 1}`;
+                                const opt = document.createElement('option');
+                                opt.value = d.deviceId;
+                                opt.textContent = label;
+                                deviceSelect.appendChild(opt);
+                            });
+                            if (refreshBtn) refreshBtn.style.display = 'inline-block';
+                        }
+                        showDiag(`<div class="alert alert-success">Found ${videoInputs.length} camera device(s).</div>`);
+                    }
+                    return videoInputs;
+                } catch (err) {
+                    showDiag(`<div class="alert alert-warning">Error enumerating devices: ${err && err.message ? err.message : String(err)}</div>`);
+                    return [];
+                }
+            };
+
+            async function attemptStart() {
+                try {
+                    // Check if getUserMedia is available
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        throw new Error('Camera access not supported in this browser.');
+                    }
+
+                    const selectedDevice = deviceSelect && deviceSelect.value ? deviceSelect.value : null;
+                    const constraints = selectedDevice ? { video: { deviceId: { exact: selectedDevice }, width: { ideal: 640 }, height: { ideal: 480 } } } : { video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } } };
+
+                    stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+                    // Show what we requested for debugging
+                    try {
+                        showDiag(`<div class="alert alert-info">Requested constraints: <small><pre style="white-space:pre-wrap;">${JSON.stringify(constraints)}</pre></small></div>`);
+                    } catch (e) {
+                        // ignore JSON errors
+                    }
+
+                    const video = document.getElementById('video');
+
+                    // Attach stream and inspect the chosen track to verify which camera was actually used
+                    video.srcObject = stream;
+                    const chosenTrack = stream.getVideoTracks()[0];
+                    const chosenLabel = chosenTrack && chosenTrack.label ? chosenTrack.label : '';
+                    if (chosenLabel) {
+                        showDiag(`<div class="alert alert-info">Using camera: <strong>${chosenLabel}</strong></div>`);
+                    }
+
+                    // If the user explicitly selected a deviceId but the returned track label suggests a FRONT camera,
+                    // try a fallback using facingMode: 'environment' which is often more reliable on mobile devices.
+                    const lowerLabel = (chosenLabel || '').toLowerCase();
+                    if (selectedDevice && lowerLabel && (lowerLabel.includes('front') || lowerLabel.includes('user') || lowerLabel.includes('selfie'))) {
+                        showDiag('<div class="alert alert-warning">Selected device appears to be the front camera. Attempting fallback to facingMode: environment.</div>');
+                        // Stop current stream before retrying
+                        try {
+                            stream.getTracks().forEach(t => t.stop());
+                        } catch (stopErr) {
+                            console.warn('Error stopping tracks before fallback:', stopErr);
+                        }
+
+                        try {
+                            const fallbackConstraints = { video: { facingMode: { ideal: 'environment' }, width: { ideal: 640 }, height: { ideal: 480 } } };
+                            stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+                            video.srcObject = stream;
+                            const fallbackTrack = stream.getVideoTracks()[0];
+                            const fallbackLabel = fallbackTrack && fallbackTrack.label ? fallbackTrack.label : '';
+                            showDiag(`<div class="alert alert-success">Fallback succeeded, using camera: <strong>${fallbackLabel || 'unknown'}</strong></div>`);
+                        } catch (fallbackErr) {
+                            showDiag(`<div class="alert alert-danger">Fallback to environment failed: ${fallbackErr && fallbackErr.message ? fallbackErr.message : String(fallbackErr)}</div>`);
+                            // Re-throw to be handled by outer catch and show final error
+                            throw fallbackErr;
+                        }
+                    }
+
+                    // Improve autoplay/playback on mobile
+                    try {
+                        video.muted = true;
+                        video.playsInline = true;
+                        video.setAttribute('playsinline', '');
+                        await video.play();
+                    } catch (playErr) {
+                        console.warn('Video play() was rejected:', playErr);
+                        throw new Error('Unable to start video playback. Please interact with the page (tap video) or check browser settings.');
+                    }
+
+                    if (startBtn) startBtn.style.display = 'none';
+                    const stopBtn = document.getElementById('stop-scanner');
+                    if (stopBtn) stopBtn.style.display = 'inline-block';
+                    scannerActive = true;
+                    showDiag('<div class="alert alert-success">Camera started. Scanning for QR codes…</div>');
+                    // If jsQR is not available (CDN blocked and no local decoder), warn the user
+                    if (typeof jsQR === 'undefined' || typeof jsQR !== 'function') {
+                        showDiag('<div class="alert alert-warning">QR decoder (jsQR) is not available. Scanning will not work.</div>');
+                        // Also surface to page-level banner
+                        if (window.showCdnWarning) window.showCdnWarning('QR decoder is unavailable; scanning will not work.');
+                    }
+                    // Start scanning for QR codes
+                    startQRScanning();
+                } catch (err) {
+                    console.error('Camera error:', err);
+                    let errorMessage = 'Error accessing camera: ' + (err && err.message ? err.message : String(err));
+                    if (err && err.name === 'NotAllowedError') {
+                        errorMessage = 'Camera access denied. Please allow camera permission and try again.';
+                    } else if (err && err.name === 'NotFoundError') {
+                        errorMessage = 'No camera found. Please ensure a camera is connected.';
+                    } else if (err && err.name === 'NotSupportedError') {
+                        errorMessage = 'Camera not supported. Please use a modern browser.';
+                    } else if (err && err.name === 'NotReadableError') {
+                        errorMessage = 'Camera is being used by another application. Please close other camera apps and try again.';
+                    }
+                    showDiag(`<div class="alert alert-danger"><strong>${errorMessage}</strong><div class="mt-2"><small>Check console for details.</small></div></div>`);
+                }
+            }
+
+            if (!startBtn) return;
+
+            // Attach click handler
+            startBtn.addEventListener('click', async () => {
+                // If behind insecure origin and not localhost, warn user
+                if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                    showDiag('<div class="alert alert-warning">getUserMedia requires secure context (HTTPS) in many browsers. Try serving the site over HTTPS or use localhost.</div>');
+                    // Still attempt to start in case browser allows it
                 }
 
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: 'environment', // Use back camera
-                        width: { ideal: 640 },
-                        height: { ideal: 480 }
-                    } 
+                await listDevices();
+                await attemptStart();
+            });
+
+            // Stop button handler
+            const stopBtn = document.getElementById('stop-scanner');
+            if (stopBtn) {
+                stopBtn.addEventListener('click', () => {
+                    stopQRScanning();
+                    showDiag('<div class="alert alert-info">Camera stopped.</div>');
                 });
-                
-                const video = document.getElementById('video');
-                video.srcObject = stream;
-                video.play();
-                
-                document.getElementById('start-scanner').style.display = 'none';
-                document.getElementById('stop-scanner').style.display = 'inline-block';
-                scannerActive = true;
-                
-                // Start scanning for QR codes
-                startQRScanning();
-            } catch (err) {
-                console.error('Camera error:', err);
-                
-                // Show detailed error message
-                let errorMessage = 'Error accessing camera: ' + err.message;
-                
-                if (err.name === 'NotAllowedError') {
-                    errorMessage = 'Camera access denied. Please allow camera permission and try again.';
-                } else if (err.name === 'NotFoundError') {
-                    errorMessage = 'No camera found. Please ensure a camera is connected.';
-                } else if (err.name === 'NotSupportedError') {
-                    errorMessage = 'Camera not supported. Please use a modern browser.';
-                } else if (err.name === 'NotReadableError') {
-                    errorMessage = 'Camera is being used by another application. Please close other camera apps and try again.';
-                }
-                
-                alert(errorMessage);
-                
-                // Show alternative access methods
-                const warningDiv = document.createElement('div');
-                warningDiv.className = 'alert alert-warning mt-3';
-                warningDiv.innerHTML = `
-                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Camera Access Issues</h6>
-                    <p><strong>Try these solutions:</strong></p>
-                    <ul class="mb-0">
-                        <li>Allow camera permission in browser settings</li>
-                        <li>Close other applications using the camera</li>
-                        <li>Try refreshing the page</li>
-                        <li>Use manual QR code entry below</li>
-                    </ul>
-                `;
-                document.getElementById('scanner-container').appendChild(warningDiv);
             }
-        });
+
+            // Refresh devices handler
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', async () => {
+                    await listDevices();
+                });
+            }
+
+            // Allow tapping video to resume playback when rejected
+            const videoEl = document.getElementById('video');
+            if (videoEl) {
+                videoEl.addEventListener('click', async () => {
+                    try {
+                        await videoEl.play();
+                        showDiag('<div class="alert alert-success">Playback resumed by user interaction.</div>');
+                    } catch (err) {
+                        console.warn('Playback resume failed:', err);
+                    }
+                });
+            }
+
+            // Pre-populate device list on load (best-effort)
+            listDevices();
+        })();
 {% endif %}
 
 // Stop camera scanner (only if available)
 {% if qr_scanning_available %}
-document.getElementById('stop-scanner').addEventListener('click', () => {
-    stopQRScanning();
-});
+(function() {
+    const stopBtn = document.getElementById('stop-scanner');
+    if (!stopBtn) return;
+    stopBtn.addEventListener('click', () => {
+        stopQRScanning();
+    });
+})();
 {% endif %}
 
 // Start QR code scanning
@@ -566,63 +719,91 @@ document.addEventListener('click', function(e) {
         const originalText = updateButton.innerHTML;
         updateButton.disabled = true;
         updateButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Updating...';
-        
-        // Send request
-        fetch(`/update_status/${itemId}`, {
-            method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: formData
-        })
-        .then(response => {
-            // Check if response is JSON
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                // Check if response is an error
-                if (!response.ok) {
-                    return response.json().then(data => {
-                        throw new Error(data.error || 'Update failed');
-                    });
-                }
-                return response.json();
-            } else {
-                // Handle HTML redirect response
-                if (response.ok || response.redirected) {
-                    return { success: true, message: 'Status updated successfully!' };
+
+        // Helper to send formData to server
+        function doSend(fd) {
+            fetch(`/update_status/${itemId}`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: fd
+            })
+            .then(response => {
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    // Check if response is an error
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.error || 'Update failed');
+                        });
+                    }
+                    return response.json();
                 } else {
-                    return response.text().then(text => {
-                        throw new Error('Update failed: ' + text);
-                    });
+                    // Handle HTML redirect response
+                    if (response.ok || response.redirected) {
+                        return { success: true, message: 'Status updated successfully!' };
+                    } else {
+                        return response.text().then(text => {
+                            throw new Error('Update failed: ' + text);
+                        });
+                    }
                 }
-            }
-        })
-        .then(data => {
-            if (data && data.success) {
-                // Close the modal
-                const modalElement = document.getElementById('statusUpdateModal');
-                const modal = bootstrap.Modal.getInstance(modalElement);
-                if (modal) {
-                    modal.hide();
+            })
+            .then(data => {
+                if (data && data.success) {
+                    // Close the modal
+                    const modalElement = document.getElementById('statusUpdateModal');
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+                    if (modal) {
+                        modal.hide();
+                    }
+                    // Show success message
+                    alert(data.message || 'Status updated successfully!');
+                    // Reload the page to show updated status
+                    setTimeout(() => {
+                        location.reload();
+                    }, 500);
+                } else {
+                    throw new Error(data?.error || 'Update failed');
                 }
-                
-                // Show success message
-                alert(data.message || 'Status updated successfully!');
-                
-                // Reload the page to show updated status
-                setTimeout(() => {
-                    location.reload();
-                }, 500);
-            } else {
-                throw new Error(data?.error || 'Update failed');
-            }
-        })
-        .catch(error => {
-            console.error('Error updating status:', error);
-            updateButton.disabled = false;
-            updateButton.innerHTML = originalText;
-            alert('Error updating status: ' + (error.message || 'Please try again.'));
-        });
+            })
+            .catch(error => {
+                console.error('Error updating status:', error);
+                updateButton.disabled = false;
+                updateButton.innerHTML = originalText;
+                alert('Error updating status: ' + (error.message || 'Please try again.'));
+            });
+        }
+
+        // Try to get device geolocation; if available, append to form data before sending
+        if (navigator.geolocation) {
+            let sent = false;
+            const timeoutMs = 7000;
+            const done = (lat, lng) => {
+                if (sent) return;
+                sent = true;
+                formData.append('device_latitude', lat);
+                formData.append('device_longitude', lng);
+                doSend(formData);
+            };
+            const errorSend = () => {
+                if (sent) return;
+                sent = true;
+                doSend(formData);
+            };
+            const id = navigator.geolocation.getCurrentPosition(function(pos) {
+                done(pos.coords.latitude, pos.coords.longitude);
+            }, function(err) {
+                // On error or denied permission, send without coords
+                errorSend();
+            }, { enableHighAccuracy: true, timeout: timeoutMs });
+            // Fallback timeout in case browser doesn't honor timeout
+            setTimeout(() => { errorSend(); }, timeoutMs + 500);
+        } else {
+            doSend(formData);
+        }
     }
 });
 

@@ -1,0 +1,2081 @@
+[
+  {
+    "username": "admin",
+    "email": "admin@nabua.gov.ph",
+    "full_name": "System Administrator",
+    "phone": "+63-999-000-0001",
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2025-11-22T14:12:52.901632"
+  },
+  {
+    "username": "fraarroyo",
+    "email": "admin@gmail.com",
+    "full_name": "francis",
+    "phone": "09876543212",
+    "role": "barangay",
+    "is_active": true,
+    "created_at": "2025-11-22T14:20:39.431795"
+  },
+  {
+    "username": "collector",
+    "email": "collector@gmail.com",
+    "full_name": "collector",
+    "phone": "09936523996",
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2025-12-01T00:51:27.979181"
+  },
+  {
+    "username": "test_admin",
+    "email": "test_admin@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T08:01:59.767572"
+  },
+  {
+    "username": "test_collector",
+    "email": "test_collector@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T08:01:59.767576"
+  },
+  {
+    "username": "test_admin_6a95cb22",
+    "email": "test_admin_6a95cb22@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T08:03:20.590477"
+  },
+  {
+    "username": "test_collector_6a95cb22",
+    "email": "test_collector_6a95cb22@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T08:03:20.590482"
+  },
+  {
+    "username": "test_admin_0d0a6a27",
+    "email": "test_admin_0d0a6a27@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T08:03:21.642200"
+  },
+  {
+    "username": "test_collector_0d0a6a27",
+    "email": "test_collector_0d0a6a27@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T08:03:21.642205"
+  },
+  {
+    "username": "test_admin_04e2d25f",
+    "email": "test_admin_04e2d25f@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T08:03:40.224599"
+  },
+  {
+    "username": "test_collector_04e2d25f",
+    "email": "test_collector_04e2d25f@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T08:03:40.224604"
+  },
+  {
+    "username": "test_admin_8d4019dd",
+    "email": "test_admin_8d4019dd@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T08:03:41.853357"
+  },
+  {
+    "username": "test_collector_8d4019dd",
+    "email": "test_collector_8d4019dd@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T08:03:41.853361"
+  },
+  {
+    "username": "debug_admin_6f997e38",
+    "email": "debug_admin_6f997e38@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T08:04:11.566465"
+  },
+  {
+    "username": "debug_admin_4d7a5082",
+    "email": "debug_admin_4d7a5082@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T08:04:22.026848"
+  },
+  {
+    "username": "debug_admin_7a8066de",
+    "email": "debug_admin_7a8066de@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T08:04:33.712840"
+  },
+  {
+    "username": "test_admin_1284f5fb",
+    "email": "test_admin_1284f5fb@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T12:53:19.868675"
+  },
+  {
+    "username": "test_collector_1284f5fb",
+    "email": "test_collector_1284f5fb@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T12:53:19.868675"
+  },
+  {
+    "username": "test_admin_63efe727",
+    "email": "test_admin_63efe727@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T12:53:52.399271"
+  },
+  {
+    "username": "test_collector_63efe727",
+    "email": "test_collector_63efe727@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T12:53:52.399271"
+  },
+  {
+    "username": "test_admin_6824405e",
+    "email": "test_admin_6824405e@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T12:55:18.908956"
+  },
+  {
+    "username": "test_collector_6824405e",
+    "email": "test_collector_6824405e@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T12:55:18.908956"
+  },
+  {
+    "username": "test_admin_ab0f1462",
+    "email": "test_admin_ab0f1462@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T12:55:29.349387"
+  },
+  {
+    "username": "test_collector_ab0f1462",
+    "email": "test_collector_ab0f1462@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T12:55:29.349387"
+  },
+  {
+    "username": "test_admin_2fd67a20",
+    "email": "test_admin_2fd67a20@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T12:55:39.802654"
+  },
+  {
+    "username": "test_collector_2fd67a20",
+    "email": "test_collector_2fd67a20@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T12:55:39.802654"
+  },
+  {
+    "username": "test_admin_f40ec41d",
+    "email": "test_admin_f40ec41d@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:03:26.842111"
+  },
+  {
+    "username": "test_collector_f40ec41d",
+    "email": "test_collector_f40ec41d@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:03:26.842111"
+  },
+  {
+    "username": "test_admin_2e92cb6f",
+    "email": "test_admin_2e92cb6f@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:03:27.655926"
+  },
+  {
+    "username": "test_collector_2e92cb6f",
+    "email": "test_collector_2e92cb6f@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:03:27.655926"
+  },
+  {
+    "username": "test_admin_2bbbb31f",
+    "email": "test_admin_2bbbb31f@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:03:28.203299"
+  },
+  {
+    "username": "test_collector_2bbbb31f",
+    "email": "test_collector_2bbbb31f@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:03:28.203299"
+  },
+  {
+    "username": "test_admin_bf6df49c",
+    "email": "test_admin_bf6df49c@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:03:28.774181"
+  },
+  {
+    "username": "test_collector_bf6df49c",
+    "email": "test_collector_bf6df49c@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:03:28.774181"
+  },
+  {
+    "username": "test_admin_c3c32cc9",
+    "email": "test_admin_c3c32cc9@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:03:29.886858"
+  },
+  {
+    "username": "test_collector_c3c32cc9",
+    "email": "test_collector_c3c32cc9@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:03:29.886858"
+  },
+  {
+    "username": "test_admin_cbb1989b",
+    "email": "test_admin_cbb1989b@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:03:31.118806"
+  },
+  {
+    "username": "test_collector_cbb1989b",
+    "email": "test_collector_cbb1989b@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:03:31.118806"
+  },
+  {
+    "username": "test_admin_163d6391",
+    "email": "test_admin_163d6391@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:07:06.047650"
+  },
+  {
+    "username": "test_collector_163d6391",
+    "email": "test_collector_163d6391@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:07:06.047650"
+  },
+  {
+    "username": "test_admin_680743c4",
+    "email": "test_admin_680743c4@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:10:44.358464"
+  },
+  {
+    "username": "test_collector_680743c4",
+    "email": "test_collector_680743c4@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:10:44.358464"
+  },
+  {
+    "username": "test_admin_a341086a",
+    "email": "test_admin_a341086a@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:10:45.092752"
+  },
+  {
+    "username": "test_collector_a341086a",
+    "email": "test_collector_a341086a@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:10:45.092752"
+  },
+  {
+    "username": "test_admin_3fc54d88",
+    "email": "test_admin_3fc54d88@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:10:45.606999"
+  },
+  {
+    "username": "test_collector_3fc54d88",
+    "email": "test_collector_3fc54d88@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:10:45.606999"
+  },
+  {
+    "username": "test_admin_44933dd8",
+    "email": "test_admin_44933dd8@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:10:47.572522"
+  },
+  {
+    "username": "test_collector_44933dd8",
+    "email": "test_collector_44933dd8@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:10:47.572522"
+  },
+  {
+    "username": "test_admin_349d241b",
+    "email": "test_admin_349d241b@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:10:48.737919"
+  },
+  {
+    "username": "test_collector_349d241b",
+    "email": "test_collector_349d241b@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:10:48.737919"
+  },
+  {
+    "username": "test_admin_599e0ccb",
+    "email": "test_admin_599e0ccb@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:10:49.903271"
+  },
+  {
+    "username": "test_collector_599e0ccb",
+    "email": "test_collector_599e0ccb@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:10:49.903271"
+  },
+  {
+    "username": "test_admin_93bb659d",
+    "email": "test_admin_93bb659d@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:10:51.036899"
+  },
+  {
+    "username": "test_collector_93bb659d",
+    "email": "test_collector_93bb659d@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:10:51.036899"
+  },
+  {
+    "username": "test_admin_47078634",
+    "email": "test_admin_47078634@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:10:52.217491"
+  },
+  {
+    "username": "test_collector_47078634",
+    "email": "test_collector_47078634@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:10:52.217491"
+  },
+  {
+    "username": "test_admin_27014cdb",
+    "email": "test_admin_27014cdb@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:18.405316"
+  },
+  {
+    "username": "test_collector_27014cdb",
+    "email": "test_collector_27014cdb@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:18.405316"
+  },
+  {
+    "username": "test_admin_42965daf",
+    "email": "test_admin_42965daf@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:19.187777"
+  },
+  {
+    "username": "test_collector_42965daf",
+    "email": "test_collector_42965daf@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:19.187777"
+  },
+  {
+    "username": "test_admin_3b1ea9a6",
+    "email": "test_admin_3b1ea9a6@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:19.654977"
+  },
+  {
+    "username": "test_collector_3b1ea9a6",
+    "email": "test_collector_3b1ea9a6@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:19.654977"
+  },
+  {
+    "username": "test_admin_d056ecbb",
+    "email": "test_admin_d056ecbb@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:21.234563"
+  },
+  {
+    "username": "test_collector_d056ecbb",
+    "email": "test_collector_d056ecbb@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:21.234563"
+  },
+  {
+    "username": "test_admin_1caee231",
+    "email": "test_admin_1caee231@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:22.382685"
+  },
+  {
+    "username": "test_collector_1caee231",
+    "email": "test_collector_1caee231@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:22.382685"
+  },
+  {
+    "username": "test_admin_7f83b13a",
+    "email": "test_admin_7f83b13a@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:23.764446"
+  },
+  {
+    "username": "test_collector_7f83b13a",
+    "email": "test_collector_7f83b13a@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:23.764446"
+  },
+  {
+    "username": "test_admin_44d0a5da",
+    "email": "test_admin_44d0a5da@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:24.898162"
+  },
+  {
+    "username": "test_collector_44d0a5da",
+    "email": "test_collector_44d0a5da@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:24.898162"
+  },
+  {
+    "username": "test_admin_6ea229ce",
+    "email": "test_admin_6ea229ce@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:25.429912"
+  },
+  {
+    "username": "test_collector_6ea229ce",
+    "email": "test_collector_6ea229ce@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:25.429912"
+  },
+  {
+    "username": "test_admin_4ef7ad69",
+    "email": "test_admin_4ef7ad69@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:26.713892"
+  },
+  {
+    "username": "test_collector_4ef7ad69",
+    "email": "test_collector_4ef7ad69@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:26.713892"
+  },
+  {
+    "username": "test_admin_0fd5d736",
+    "email": "test_admin_0fd5d736@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:27.927146"
+  },
+  {
+    "username": "test_collector_0fd5d736",
+    "email": "test_collector_0fd5d736@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:27.927146"
+  },
+  {
+    "username": "test_admin_efbf3ac2",
+    "email": "test_admin_efbf3ac2@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:49.786504"
+  },
+  {
+    "username": "test_collector_efbf3ac2",
+    "email": "test_collector_efbf3ac2@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:49.786504"
+  },
+  {
+    "username": "test_admin_0fa4e00c",
+    "email": "test_admin_0fa4e00c@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:50.621688"
+  },
+  {
+    "username": "test_collector_0fa4e00c",
+    "email": "test_collector_0fa4e00c@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:50.621688"
+  },
+  {
+    "username": "test_admin_28c6e77f",
+    "email": "test_admin_28c6e77f@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:51.201599"
+  },
+  {
+    "username": "test_collector_28c6e77f",
+    "email": "test_collector_28c6e77f@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:51.201599"
+  },
+  {
+    "username": "test_admin_2beaafe6",
+    "email": "test_admin_2beaafe6@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:51.733317"
+  },
+  {
+    "username": "test_collector_2beaafe6",
+    "email": "test_collector_2beaafe6@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:51.733317"
+  },
+  {
+    "username": "test_admin_b668f3b0",
+    "email": "test_admin_b668f3b0@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:52.858957"
+  },
+  {
+    "username": "test_collector_b668f3b0",
+    "email": "test_collector_b668f3b0@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:52.858957"
+  },
+  {
+    "username": "test_admin_69659020",
+    "email": "test_admin_69659020@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:54.316787"
+  },
+  {
+    "username": "test_collector_69659020",
+    "email": "test_collector_69659020@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:54.316787"
+  },
+  {
+    "username": "test_admin_25bda3bc",
+    "email": "test_admin_25bda3bc@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:55.483144"
+  },
+  {
+    "username": "test_collector_25bda3bc",
+    "email": "test_collector_25bda3bc@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:55.483144"
+  },
+  {
+    "username": "test_admin_4226c11d",
+    "email": "test_admin_4226c11d@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:55.999301"
+  },
+  {
+    "username": "test_collector_4226c11d",
+    "email": "test_collector_4226c11d@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:55.999301"
+  },
+  {
+    "username": "test_admin_aaf68375",
+    "email": "test_admin_aaf68375@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:57.167749"
+  },
+  {
+    "username": "test_collector_aaf68375",
+    "email": "test_collector_aaf68375@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:57.167749"
+  },
+  {
+    "username": "test_admin_c56fce52",
+    "email": "test_admin_c56fce52@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:58.276119"
+  },
+  {
+    "username": "test_collector_c56fce52",
+    "email": "test_collector_c56fce52@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:11:58.276119"
+  },
+  {
+    "username": "test_admin_1aebc5e2",
+    "email": "test_admin_1aebc5e2@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:14:44.430827"
+  },
+  {
+    "username": "test_collector_1aebc5e2",
+    "email": "test_collector_1aebc5e2@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:14:44.430827"
+  },
+  {
+    "username": "test_admin_a32627bc",
+    "email": "test_admin_a32627bc@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:14:56.151388"
+  },
+  {
+    "username": "test_collector_a32627bc",
+    "email": "test_collector_a32627bc@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:14:56.151388"
+  },
+  {
+    "username": "test_admin_1c7cc75b",
+    "email": "test_admin_1c7cc75b@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:15:08.319844"
+  },
+  {
+    "username": "test_collector_1c7cc75b",
+    "email": "test_collector_1c7cc75b@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:15:08.319844"
+  },
+  {
+    "username": "test_admin_4194857a",
+    "email": "test_admin_4194857a@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:15:30.260891"
+  },
+  {
+    "username": "test_collector_4194857a",
+    "email": "test_collector_4194857a@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:15:30.260891"
+  },
+  {
+    "username": "test_admin_147205b0",
+    "email": "test_admin_147205b0@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:15:49.657241"
+  },
+  {
+    "username": "test_collector_147205b0",
+    "email": "test_collector_147205b0@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:15:49.657241"
+  },
+  {
+    "username": "test_admin_2d599f5c",
+    "email": "test_admin_2d599f5c@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:12.830816"
+  },
+  {
+    "username": "test_collector_2d599f5c",
+    "email": "test_collector_2d599f5c@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:12.830816"
+  },
+  {
+    "username": "test_admin_2a6fbf50",
+    "email": "test_admin_2a6fbf50@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:33.826422"
+  },
+  {
+    "username": "test_collector_2a6fbf50",
+    "email": "test_collector_2a6fbf50@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:33.826422"
+  },
+  {
+    "username": "test_admin_dbd941b0",
+    "email": "test_admin_dbd941b0@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:34.556904"
+  },
+  {
+    "username": "test_collector_dbd941b0",
+    "email": "test_collector_dbd941b0@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:34.556904"
+  },
+  {
+    "username": "test_admin_69a15268",
+    "email": "test_admin_69a15268@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:35.170064"
+  },
+  {
+    "username": "test_collector_69a15268",
+    "email": "test_collector_69a15268@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:35.170064"
+  },
+  {
+    "username": "test_admin_bcc776f8",
+    "email": "test_admin_bcc776f8@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:35.787839"
+  },
+  {
+    "username": "test_collector_bcc776f8",
+    "email": "test_collector_bcc776f8@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:35.787839"
+  },
+  {
+    "username": "test_admin_2d7454af",
+    "email": "test_admin_2d7454af@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:37.055186"
+  },
+  {
+    "username": "test_collector_2d7454af",
+    "email": "test_collector_2d7454af@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:37.055186"
+  },
+  {
+    "username": "test_admin_fabb4beb",
+    "email": "test_admin_fabb4beb@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:38.353770"
+  },
+  {
+    "username": "test_collector_fabb4beb",
+    "email": "test_collector_fabb4beb@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:38.353770"
+  },
+  {
+    "username": "test_admin_4f606c40",
+    "email": "test_admin_4f606c40@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:39.468167"
+  },
+  {
+    "username": "test_collector_4f606c40",
+    "email": "test_collector_4f606c40@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:39.468167"
+  },
+  {
+    "username": "test_admin_b7a3ffdf",
+    "email": "test_admin_b7a3ffdf@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:40.651239"
+  },
+  {
+    "username": "test_collector_b7a3ffdf",
+    "email": "test_collector_b7a3ffdf@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:40.651239"
+  },
+  {
+    "username": "test_admin_0c88a746",
+    "email": "test_admin_0c88a746@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:41.849875"
+  },
+  {
+    "username": "test_collector_0c88a746",
+    "email": "test_collector_0c88a746@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:41.849875"
+  },
+  {
+    "username": "test_admin_7df63baf",
+    "email": "test_admin_7df63baf@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:43.163087"
+  },
+  {
+    "username": "test_collector_7df63baf",
+    "email": "test_collector_7df63baf@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:43.163087"
+  },
+  {
+    "username": "test_admin_4fe097cf",
+    "email": "test_admin_4fe097cf@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:43.714461"
+  },
+  {
+    "username": "test_collector_4fe097cf",
+    "email": "test_collector_4fe097cf@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:43.714461"
+  },
+  {
+    "username": "test_admin_20c2fdf7",
+    "email": "test_admin_20c2fdf7@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:44.946459"
+  },
+  {
+    "username": "test_collector_20c2fdf7",
+    "email": "test_collector_20c2fdf7@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:44.946459"
+  },
+  {
+    "username": "test_admin_2183ab0c",
+    "email": "test_admin_2183ab0c@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:46.058894"
+  },
+  {
+    "username": "test_collector_2183ab0c",
+    "email": "test_collector_2183ab0c@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:46.058894"
+  },
+  {
+    "username": "test_admin_c6fb2ded",
+    "email": "test_admin_c6fb2ded@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:47.301046"
+  },
+  {
+    "username": "test_collector_c6fb2ded",
+    "email": "test_collector_c6fb2ded@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:47.301046"
+  },
+  {
+    "username": "test_admin_ab4b9ace",
+    "email": "test_admin_ab4b9ace@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:48.490546"
+  },
+  {
+    "username": "test_collector_ab4b9ace",
+    "email": "test_collector_ab4b9ace@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:16:48.490546"
+  },
+  {
+    "username": "test_admin_da0e89de",
+    "email": "test_admin_da0e89de@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:18:11.591002"
+  },
+  {
+    "username": "test_collector_da0e89de",
+    "email": "test_collector_da0e89de@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:18:11.591002"
+  },
+  {
+    "username": "test_admin_3f44ed38",
+    "email": "test_admin_3f44ed38@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:22:26.315136"
+  },
+  {
+    "username": "test_collector_3f44ed38",
+    "email": "test_collector_3f44ed38@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:22:26.315136"
+  },
+  {
+    "username": "test_admin_a588fa43",
+    "email": "test_admin_a588fa43@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:24:20.580461"
+  },
+  {
+    "username": "test_collector_a588fa43",
+    "email": "test_collector_a588fa43@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:24:20.580461"
+  },
+  {
+    "username": "test_admin_17ebb545",
+    "email": "test_admin_17ebb545@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:26:40.543933"
+  },
+  {
+    "username": "test_collector_17ebb545",
+    "email": "test_collector_17ebb545@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:26:40.543933"
+  },
+  {
+    "username": "test_admin_41cac0fe",
+    "email": "test_admin_41cac0fe@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:33:44.446637"
+  },
+  {
+    "username": "test_collector_41cac0fe",
+    "email": "test_collector_41cac0fe@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:33:44.446637"
+  },
+  {
+    "username": "test_admin_97b0d972",
+    "email": "test_admin_97b0d972@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:34:02.367006"
+  },
+  {
+    "username": "test_collector_97b0d972",
+    "email": "test_collector_97b0d972@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:34:02.367006"
+  },
+  {
+    "username": "test_collector_loc_c9086292",
+    "email": "loc_c9086292@example.com",
+    "full_name": "Collector Loc",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:34:02.552186"
+  },
+  {
+    "username": "test_admin_34cc9a8b",
+    "email": "test_admin_34cc9a8b@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:34:15.769997"
+  },
+  {
+    "username": "test_collector_34cc9a8b",
+    "email": "test_collector_34cc9a8b@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:34:15.769997"
+  },
+  {
+    "username": "collector_b1_0f555096",
+    "email": "c1_0f555096@example.com",
+    "full_name": "Collector B1",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:34:16.224629"
+  },
+  {
+    "username": "collector_b2_0f555096",
+    "email": "c2_0f555096@example.com",
+    "full_name": "Collector B2",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:34:16.224629"
+  },
+  {
+    "username": "barangay_0f555096",
+    "email": "brgy_0f555096@example.com",
+    "full_name": "Barangay User",
+    "phone": null,
+    "role": "barangay",
+    "is_active": true,
+    "created_at": "2026-01-04T13:34:16.224629"
+  },
+  {
+    "username": "test_admin_ad0ba094",
+    "email": "test_admin_ad0ba094@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:34:23.233543"
+  },
+  {
+    "username": "test_collector_ad0ba094",
+    "email": "test_collector_ad0ba094@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:34:23.233543"
+  },
+  {
+    "username": "test_admin_78d96937",
+    "email": "test_admin_78d96937@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:34:39.648857"
+  },
+  {
+    "username": "test_collector_78d96937",
+    "email": "test_collector_78d96937@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:34:39.648857"
+  },
+  {
+    "username": "brgy_user_8764d0a8",
+    "email": "brgy_8764d0a8@example.com",
+    "full_name": "BRGY User",
+    "phone": null,
+    "role": "barangay",
+    "is_active": true,
+    "created_at": "2026-01-04T13:34:39.831960"
+  },
+  {
+    "username": "test_admin_522849cc",
+    "email": "test_admin_522849cc@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:35:38.133828"
+  },
+  {
+    "username": "test_collector_522849cc",
+    "email": "test_collector_522849cc@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:35:38.133828"
+  },
+  {
+    "username": "ping_collector_5efcb640",
+    "email": "ping_5efcb640@example.com",
+    "full_name": "Ping Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:35:38.301057"
+  },
+  {
+    "username": "test_admin_6971d3d1",
+    "email": "test_admin_6971d3d1@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:47:31.410959"
+  },
+  {
+    "username": "test_admin_109a2af9",
+    "email": "test_admin_109a2af9@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:47:31.830599"
+  },
+  {
+    "username": "test_admin_9e4ef965",
+    "email": "test_admin_9e4ef965@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:48:47.233105"
+  },
+  {
+    "username": "test_admin_44e42de9",
+    "email": "test_admin_44e42de9@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:48:48.752188"
+  },
+  {
+    "username": "test_admin_e68f8c82",
+    "email": "test_admin_e68f8c82@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:05.678468"
+  },
+  {
+    "username": "test_admin_dc2fe468",
+    "email": "test_admin_dc2fe468@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:06.829293"
+  },
+  {
+    "username": "test_admin_f38790bb",
+    "email": "test_admin_f38790bb@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:07.975953"
+  },
+  {
+    "username": "test_collector_f38790bb",
+    "email": "test_collector_f38790bb@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:07.975953"
+  },
+  {
+    "username": "test_admin_152d0a66",
+    "email": "test_admin_152d0a66@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:08.544005"
+  },
+  {
+    "username": "test_collector_152d0a66",
+    "email": "test_collector_152d0a66@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:08.544005"
+  },
+  {
+    "username": "test_admin_0081e11e",
+    "email": "test_admin_0081e11e@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:09.124065"
+  },
+  {
+    "username": "test_collector_0081e11e",
+    "email": "test_collector_0081e11e@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:09.124065"
+  },
+  {
+    "username": "test_admin_3a3723b0",
+    "email": "test_admin_3a3723b0@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:09.691762"
+  },
+  {
+    "username": "test_collector_3a3723b0",
+    "email": "test_collector_3a3723b0@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:09.691762"
+  },
+  {
+    "username": "test_admin_871759ac",
+    "email": "test_admin_871759ac@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:10.873788"
+  },
+  {
+    "username": "test_collector_871759ac",
+    "email": "test_collector_871759ac@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:10.873788"
+  },
+  {
+    "username": "test_admin_32cf9db3",
+    "email": "test_admin_32cf9db3@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:12.122440"
+  },
+  {
+    "username": "test_collector_32cf9db3",
+    "email": "test_collector_32cf9db3@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:12.122440"
+  },
+  {
+    "username": "test_admin_17cc9357",
+    "email": "test_admin_17cc9357@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:13.904898"
+  },
+  {
+    "username": "test_collector_17cc9357",
+    "email": "test_collector_17cc9357@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:13.904898"
+  },
+  {
+    "username": "test_admin_966d0c48",
+    "email": "test_admin_966d0c48@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:15.266934"
+  },
+  {
+    "username": "test_collector_966d0c48",
+    "email": "test_collector_966d0c48@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:15.266934"
+  },
+  {
+    "username": "test_admin_bf444d38",
+    "email": "test_admin_bf444d38@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:16.417693"
+  },
+  {
+    "username": "test_collector_bf444d38",
+    "email": "test_collector_bf444d38@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:16.417693"
+  },
+  {
+    "username": "test_admin_5e49582c",
+    "email": "test_admin_5e49582c@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:17.567441"
+  },
+  {
+    "username": "test_collector_5e49582c",
+    "email": "test_collector_5e49582c@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:17.567441"
+  },
+  {
+    "username": "test_admin_59f50712",
+    "email": "test_admin_59f50712@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:18.063981"
+  },
+  {
+    "username": "test_collector_59f50712",
+    "email": "test_collector_59f50712@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:18.063981"
+  },
+  {
+    "username": "test_admin_d90b3ad2",
+    "email": "test_admin_d90b3ad2@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:18.599625"
+  },
+  {
+    "username": "test_collector_d90b3ad2",
+    "email": "test_collector_d90b3ad2@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:18.599625"
+  },
+  {
+    "username": "test_admin_19653c39",
+    "email": "test_admin_19653c39@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:19.132411"
+  },
+  {
+    "username": "test_collector_19653c39",
+    "email": "test_collector_19653c39@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:19.132411"
+  },
+  {
+    "username": "ping_collector_54352746",
+    "email": "ping_54352746@example.com",
+    "full_name": "Ping Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:19.296845"
+  },
+  {
+    "username": "test_admin_36c278a0",
+    "email": "test_admin_36c278a0@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:19.831620"
+  },
+  {
+    "username": "test_collector_36c278a0",
+    "email": "test_collector_36c278a0@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:19.831620"
+  },
+  {
+    "username": "test_admin_d58ee60b",
+    "email": "test_admin_d58ee60b@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:20.991269"
+  },
+  {
+    "username": "test_collector_d58ee60b",
+    "email": "test_collector_d58ee60b@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:20.991269"
+  },
+  {
+    "username": "test_admin_385ff70c",
+    "email": "test_admin_385ff70c@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:22.192597"
+  },
+  {
+    "username": "test_collector_385ff70c",
+    "email": "test_collector_385ff70c@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:22.192597"
+  },
+  {
+    "username": "test_admin_3a66bbea",
+    "email": "test_admin_3a66bbea@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:23.487087"
+  },
+  {
+    "username": "test_collector_3a66bbea",
+    "email": "test_collector_3a66bbea@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:23.487087"
+  },
+  {
+    "username": "test_admin_f8b9300a",
+    "email": "test_admin_f8b9300a@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:24.638929"
+  },
+  {
+    "username": "test_collector_f8b9300a",
+    "email": "test_collector_f8b9300a@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:24.638929"
+  },
+  {
+    "username": "test_admin_a857d2e4",
+    "email": "test_admin_a857d2e4@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:25.125870"
+  },
+  {
+    "username": "test_collector_a857d2e4",
+    "email": "test_collector_a857d2e4@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:25.125870"
+  },
+  {
+    "username": "test_collector_loc_22a71d33",
+    "email": "loc_22a71d33@example.com",
+    "full_name": "Collector Loc",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:25.270528"
+  },
+  {
+    "username": "test_admin_ad391716",
+    "email": "test_admin_ad391716@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:25.808399"
+  },
+  {
+    "username": "test_collector_ad391716",
+    "email": "test_collector_ad391716@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:25.808399"
+  },
+  {
+    "username": "collector_b1_1a7be743",
+    "email": "c1_1a7be743@example.com",
+    "full_name": "Collector B1",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:26.323474"
+  },
+  {
+    "username": "collector_b2_1a7be743",
+    "email": "c2_1a7be743@example.com",
+    "full_name": "Collector B2",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:26.323474"
+  },
+  {
+    "username": "barangay_1a7be743",
+    "email": "brgy_1a7be743@example.com",
+    "full_name": "Barangay User",
+    "phone": null,
+    "role": "barangay",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:26.323474"
+  },
+  {
+    "username": "test_admin_3b83d946",
+    "email": "test_admin_3b83d946@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:26.922868"
+  },
+  {
+    "username": "test_collector_3b83d946",
+    "email": "test_collector_3b83d946@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:26.922868"
+  },
+  {
+    "username": "brgy_user_767ff193",
+    "email": "brgy_767ff193@example.com",
+    "full_name": "BRGY User",
+    "phone": null,
+    "role": "barangay",
+    "is_active": true,
+    "created_at": "2026-01-04T13:49:27.090292"
+  },
+  {
+    "username": "test_admin_d25c2576",
+    "email": "test_admin_d25c2576@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:55:16.272601"
+  },
+  {
+    "username": "test_admin_e5f97c92",
+    "email": "test_admin_e5f97c92@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:55:17.421041"
+  },
+  {
+    "username": "test_admin_e238759a",
+    "email": "test_admin_e238759a@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:57:24.409463"
+  },
+  {
+    "username": "test_collector_e238759a",
+    "email": "test_collector_e238759a@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:57:24.409463"
+  },
+  {
+    "username": "collector_b1_63973cf1",
+    "email": "c1_63973cf1@example.com",
+    "full_name": "Collector B1",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:57:24.862034"
+  },
+  {
+    "username": "collector_b2_63973cf1",
+    "email": "c2_63973cf1@example.com",
+    "full_name": "Collector B2",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:57:24.862034"
+  },
+  {
+    "username": "barangay_63973cf1",
+    "email": "brgy_63973cf1@example.com",
+    "full_name": "Barangay User",
+    "phone": null,
+    "role": "barangay",
+    "is_active": true,
+    "created_at": "2026-01-04T13:57:24.862034"
+  },
+  {
+    "username": "test_admin_2378d029",
+    "email": "test_admin_2378d029@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:57:57.114692"
+  },
+  {
+    "username": "test_collector_2378d029",
+    "email": "test_collector_2378d029@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:57:57.114692"
+  },
+  {
+    "username": "brgy_user2_9a0e19c0",
+    "email": "brgy2_9a0e19c0@example.com",
+    "full_name": "BRGY User 2",
+    "phone": null,
+    "role": "barangay",
+    "is_active": true,
+    "created_at": "2026-01-04T13:57:57.280870"
+  },
+  {
+    "username": "test_admin_a3dd41c6",
+    "email": "test_admin_a3dd41c6@example.com",
+    "full_name": "Admin",
+    "phone": null,
+    "role": "admin",
+    "is_active": true,
+    "created_at": "2026-01-04T13:59:30.860474"
+  },
+  {
+    "username": "test_collector_a3dd41c6",
+    "email": "test_collector_a3dd41c6@example.com",
+    "full_name": "Collector",
+    "phone": null,
+    "role": "collector",
+    "is_active": true,
+    "created_at": "2026-01-04T13:59:30.860474"
+  },
+  {
+    "username": "brgy_icons_ea93359e",
+    "email": "brgy_icons_ea93359e@example.com",
+    "full_name": "BRGY ICONS",
+    "phone": null,
+    "role": "barangay",
+    "is_active": true,
+    "created_at": "2026-01-04T13:59:31.043654"
+  }
+]

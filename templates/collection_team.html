@@ -10,6 +10,7 @@
                 <h4 class="mb-0">
                     <i class="fas fa-truck me-2"></i>Collection Team Dashboard
                     <span class="badge bg-light text-dark ms-2">Active Collections</span>
+                    <span id="collector-location-status" class="badge bg-secondary ms-2" title="Collector location status">Location: unknown</span>
                 </h4>
             </div>
             <div class="card-body">
@@ -77,8 +78,10 @@
                                     <td>{{ item.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                                     <td>
                                         {% if item.is_sorted %}
-                                            <form method="POST" action="{{ url_for('mark_collected', item_id=item.item_id) }}" class="d-inline">
-                                                <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Mark this item as collected?')">
+                                            <form method="POST" action="{{ url_for('mark_collected', item_id=item.item_id) }}" class="d-inline collect-form">
+                                                <input type="hidden" name="latitude" value="">
+                                                <input type="hidden" name="longitude" value="">
+                                                <button type="submit" class="btn btn-success btn-sm collect-btn" data-item-id="{{ item.item_id }}">
                                                     <i class="fas fa-check me-1"></i>Mark Collected
                                                 </button>
                                             </form>
@@ -156,6 +159,68 @@
                                 <td>
                                     <a href="{{ url_for('view_item', item_id=item.item_id) }}" class="btn btn-outline-primary btn-sm">
                                         <i class="fas fa-eye me-1"></i>View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Confirmed Collections (Barangay Representatives) -->
+{% if confirmed_collections %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-check-circle me-2"></i>Confirmed Collections from Barangay Representatives
+                </h4>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Items that have been marked as collected by the collection team and **confirmed by the barangay representative/client**.</p>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Item ID</th>
+                                <th>Item Name</th>
+                                <th>Barangay</th>
+                                <th>Address</th>
+                                <th>Confirmed At</th>
+                                <th>Waste Type</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in confirmed_collections %}
+                            <tr>
+                                <td><code>{{ item.item_id }}</code></td>
+                                <td>{{ item.item_name }}</td>
+                                <td>
+                                    <span class="badge bg-primary">{{ item.barangay.name }}</span>
+                                </td>
+                                <td>{{ item.address }}</td>
+                                <td>
+                                    {% if item.client_confirmed_at %}
+                                        {{ item.client_confirmed_at.strftime('%Y-%m-%d %H:%M') }}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge waste-type-badge bg-{{ 'primary' if item.waste_type == 'recyclable' else 'danger' if item.waste_type == 'hazardous' else 'success' if item.waste_type == 'organic' else 'secondary' }}">
+                                        {{ item.waste_type.title() }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('view_item', item_id=item.item_id) }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>View Details
                                     </a>
                                 </td>
                             </tr>
@@ -324,4 +389,91 @@
     </div>
 </div>
 {% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Capture GPS coordinates when collection team marks item as collected
+document.addEventListener('DOMContentLoaded', function() {
+    function submitWithCoords(form) {
+        // If browser supports geolocation, try to get coords
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                form.querySelector('input[name="latitude"]').value = lat;
+                form.querySelector('input[name="longitude"]').value = lng;
+                form.submit();
+            }, function(err) {
+                // On error or denied permission, submit without coords
+                form.submit();
+            }, { enableHighAccuracy: true, timeout: 10000 });
+        } else {
+            form.submit();
+        }
+    }
+
+    document.querySelectorAll('.collect-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const form = btn.closest('form');
+            if (form) submitWithCoords(form);
+        });
+    });
+
+    // Start background location pings for collectors
+    const statusEl = document.getElementById('collector-location-status');
+    if (navigator.geolocation && statusEl) {
+        let lastPos = null;
+        let watchId = null;
+        const sendLocation = async (lat, lng) => {
+            try {
+                const resp = await fetch('/collector_location', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ device_latitude: lat, device_longitude: lng })
+                });
+                if (resp.ok) {
+                    statusEl.className = 'badge bg-success ms-2';
+                    statusEl.textContent = 'Location: ok';
+                } else {
+                    statusEl.className = 'badge bg-danger ms-2';
+                    statusEl.textContent = 'Location: failed';
+                }
+            } catch (err) {
+                statusEl.className = 'badge bg-danger ms-2';
+                statusEl.textContent = 'Location: error';
+            }
+        };
+
+        try {
+            watchId = navigator.geolocation.watchPosition(function(p) {
+                lastPos = p.coords;
+                statusEl.className = 'badge bg-info ms-2';
+                statusEl.textContent = 'Location: updating';
+                // send immediately
+                sendLocation(p.coords.latitude, p.coords.longitude);
+            }, function(err) {
+                if (err && err.code === err.PERMISSION_DENIED) {
+                    statusEl.className = 'badge bg-warning ms-2';
+                    statusEl.textContent = 'Location: permission denied';
+                    if (watchId) navigator.geolocation.clearWatch(watchId);
+                } else {
+                    statusEl.className = 'badge bg-warning ms-2';
+                    statusEl.textContent = 'Location: unavailable';
+                }
+            }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 });
+
+            // Fallback periodic resend every 10s in case watchPosition doesn't fire
+            setInterval(() => {
+                if (lastPos) sendLocation(lastPos.latitude, lastPos.longitude);
+            }, 10000);
+        } catch (e) {
+            statusEl.className = 'badge bg-warning ms-2';
+            statusEl.textContent = 'Location: not supported';
+        }
+    }
+});
+</script>
 {% endblock %}

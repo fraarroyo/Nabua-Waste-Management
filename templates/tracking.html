@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Garbage Tracking | Waste Management{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h4>In-Transit & Collected Items</h4>
+        <p class="text-muted">Map showing current locations of garbage items that have been collected or are in transit.</p>
+    </div>
+    <div class="card-body">
+        <div id="map" style="height: 650px;"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const nabuaBounds = L.latLngBounds([ [13.15, 122.95], [13.55, 123.45] ]);
+const map = L.map('map', { maxBounds: nabuaBounds, maxBoundsViscosity: 0.9, minZoom: 11, maxZoom: 16 }).fitBounds(nabuaBounds);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+}).addTo(map);
+let markers = {};
+
+async function fetchItems() {
+    try {
+        const res = await fetch("{{ url_for('api_waste_locations') }}");
+        const data = await res.json();
+        data.items.forEach(it => {
+            if (!it.latitude || !it.longitude) return;
+            const key = it.item_id;
+            const lat = it.latitude;
+            const lng = it.longitude;
+            const popup = `<strong>${it.item_name}</strong><br>Status: ${it.status}<br>Collected by: ${it.collector_name || 'N/A'}<br>${new Date(it.timestamp).toLocaleString()}`;
+
+            if (markers[key]) {
+                markers[key].setLatLng([lat, lng]).setPopupContent(popup);
+            } else {
+                markers[key] = L.marker([lat, lng]).addTo(map).bindPopup(popup);
+            }
+        });
+    } catch (err) {
+        console.error('Error fetching items', err);
+    }
+}
+
+fetchItems();
+setInterval(fetchItems, 10000);
+
+// SSE for immediate updates
+if (typeof(EventSource) !== 'undefined') {
+    const es = new EventSource("{{ url_for('stream_waste_locations') }}");
+    es.onmessage = function(e) {
+        try {
+            const obj = JSON.parse(e.data);
+            if (!obj.latitude || !obj.longitude) return;
+            const key = obj.item_id;
+            const lat = obj.latitude;
+            const lng = obj.longitude;
+            const popup = `<strong>${obj.item_name}</strong><br>Status: ${obj.status}<br>Collected by: ${obj.collector_name || 'N/A'}<br>${new Date(obj.timestamp).toLocaleString()}`;
+
+            if (markers[key]) {
+                markers[key].setLatLng([lat, lng]).setPopupContent(popup);
+            } else {
+                markers[key] = L.marker([lat, lng]).addTo(map).bindPopup(popup);
+            }
+        } catch (err) {}
+    };
+}
+</script>
+{% endblock %}

@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %}My Collections - Waste Management{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h4>My Barangay Collections</h4>
+        <p class="text-muted">Map showing current locations of items collected from your barangay.</p>
+    </div>
+    <div class="card-body">
+        <div id="map" style="height: 650px;" data-barangay-id="{{ barangay_id if barangay_id is not none else '' }}"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// Default: show Nabua with a slightly zoomed-in view on load/refresh
+const nabuaBounds = L.latLngBounds([ [13.15, 122.95], [13.55, 123.45] ]);
+// Slightly higher center so the default view is shifted up
+const nabuaCenter = L.latLng(13.40, 123.37);
+const map = L.map('map', {
+    maxBounds: nabuaBounds,
+    maxBoundsViscosity: 0.9,
+    minZoom: 13,
+    maxZoom: 18
+}).setView(nabuaCenter, 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+}).addTo(map);
+let markers = {};
+let collectorMarkers = {};
+
+// Choose an icon for a collector based on recency of last_seen
+function getCollectorIcon(lastSeen) {
+    let color = 'grey';
+    if (lastSeen) {
+        const now = Date.now();
+        const last = new Date(lastSeen).getTime();
+        const diffSec = (now - last) / 1000;
+        if (diffSec <= 120) color = 'green'; // seen within 2 minutes
+        else if (diffSec <= 600) color = 'orange'; // seen within 10 minutes
+        else color = 'grey'; // older
+    } else {
+        color = 'grey';
+    }
+
+    return L.icon({
+        iconUrl: `https://cdn.jsdelivr.net/gh/pointhi/leaflet-color-markers/img/marker-icon-${color}.png`,
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+        iconSize: [25,41],
+        iconAnchor: [12,41],
+        popupAnchor: [1,-34],
+        shadowSize: [41,41]
+    });
+}
+
+async function fetchItems() {
+    try {
+        const res = await fetch("{{ url_for('api_waste_locations') }}");
+        const data = await res.json();
+        data.items.forEach(it => {
+            if (!it.latitude || !it.longitude) return;
+            const key = it.item_id;
+            const lat = it.latitude;
+            const lng = it.longitude;
+            const popup = `<strong>${it.item_name}</strong><br>Status: ${it.status}<br>Collected by: ${it.collector_name || 'N/A'}<br>${new Date(it.timestamp).toLocaleString()}`;
+
+            if (markers[key]) {
+                markers[key].setLatLng([lat, lng]).setPopupContent(popup);
+            } else {
+                markers[key] = L.marker([lat, lng]).addTo(map).bindPopup(popup);
+            }
+        });
+    } catch (err) {
+        console.error('Error fetching items', err);
+    }
+}
+
+async function fetchCollectors() {
+    try {
+        const mapEl = document.getElementById('map');
+        const barangayId = mapEl.dataset.barangayId || '';
+        const url = new URL("{{ url_for('api_collectors') }}", window.location.origin);
+        if (barangayId) url.searchParams.set('barangay_id', barangayId);
+
+        const res = await fetch(url.toString());
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.collectors) return;
+
+        data.collectors.forEach(c => {
+            if (!c.latitude || !c.longitude) {
+                // remove existing marker if any
+                if (collectorMarkers[c.id]) {
+                    map.removeLayer(collectorMarkers[c.id]);
+                    delete collectorMarkers[c.id];
+                }
+                return;
+            }
+            const key = `collector-${c.id}`;
+            const lat = c.latitude;
+            const lng = c.longitude;
+            const lastSeen = c.last_seen ? new Date(c.last_seen) : null;
+            const popup = `<strong>${c.full_name}</strong><br><small>Last seen: ${lastSeen ? lastSeen.toLocaleString() : 'N/A'}</small>`;
+
+            if (collectorMarkers[key]) {
+                collectorMarkers[key].setLatLng([lat, lng]).setPopupContent(popup);
+                // update icon based on recency
+                collectorMarkers[key].setIcon(getCollectorIcon(c.last_seen));
+            } else {
+                collectorMarkers[key] = L.marker([lat, lng], { icon: getCollectorIcon(c.last_seen) }).addTo(map).bindPopup(popup);
+            }
+        });
+    } catch (err) {
+        console.error('Error fetching collectors', err);
+    }
+}
+
+fetchItems();
+fetchCollectors();
+setInterval(fetchItems, 10000);
+setInterval(fetchCollectors, 10000);
+
+// SSE for immediate updates
+if (typeof(EventSource) !== 'undefined') {
+    const es = new EventSource("{{ url_for('stream_waste_locations') }}");
+    es.onmessage = function(e) {
+        try {
+            const obj = JSON.parse(e.data);
+            const mapEl = document.getElementById('map');
+            const myBarangay = mapEl.dataset.barangayId ? parseInt(mapEl.dataset.barangayId, 10) : null;
+
+            // If this map is scoped to a specific barangay, ignore events that belong to other barangays
+            if (myBarangay !== null && obj.barangay_id !== myBarangay) return;
+
+            // If this is a collector location update
+            if (obj.type === 'collector_location') {
+                // Extra safety: ensure collector's barangay matches current map
+                if (myBarangay !== null && obj.barangay_id !== myBarangay) return;
+                if (!obj.latitude || !obj.longitude) return;
+                const key = `collector-${obj.user_id}`;
+                const lat = obj.latitude;
+                const lng = obj.longitude;
+                const popup = `<strong>${obj.full_name}</strong><br><small>Last seen: ${new Date(obj.last_seen).toLocaleString()}</small>`;
+
+                if (collectorMarkers[key]) {
+                    collectorMarkers[key].setLatLng([lat, lng]).setPopupContent(popup);
+                    collectorMarkers[key].setIcon(getCollectorIcon(obj.last_seen));
+                } else {
+                    collectorMarkers[key] = L.marker([lat, lng], { icon: getCollectorIcon(obj.last_seen) }).addTo(map).bindPopup(popup);
+                }
+
+                return;
+            }
+
+            // Add/update marker for waste item
+            if (!obj.latitude || !obj.longitude) return;
+            const key = obj.item_id;
+            const lat = obj.latitude;
+            const lng = obj.longitude;
+            const popup = `<strong>${obj.item_name}</strong><br>Status: ${obj.status}<br>Collected by: ${obj.collector_name || 'N/A'}<br>${new Date(obj.timestamp).toLocaleString()}`;
+
+            if (markers[key]) {
+                markers[key].setLatLng([lat, lng]).setPopupContent(popup);
+            } else {
+                markers[key] = L.marker([lat, lng]).addTo(map).bindPopup(popup);
+            }
+            // show a brief toast/notification to user
+            const toast = document.createElement('div');
+            toast.className = 'alert alert-success position-fixed';
+            toast.style.top = '20px';
+            toast.style.right = '20px';
+            toast.style.zIndex = 10500;
+            toast.textContent = `New update: ${obj.item_name} — ${obj.status.replace('_',' ')}`;
+            document.body.appendChild(toast);
+            setTimeout(()=> { toast.remove(); }, 6000);
+        } catch (err) {
+            // ignore malformed events
+        }
+    };
+}
+</script>
+{% endblock %}

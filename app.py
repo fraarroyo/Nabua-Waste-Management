@@ -7,15 +7,26 @@ import qrcode
 from io import BytesIO
 import base64
 import os
-from datetime import datetime
+from datetime import datetime, timezone
+
+# Use timezone-aware UTC timestamps
+def utcnow():
+    return datetime.now(timezone.utc)
+
 import json
 import requests
+from flask import Response, stream_with_context
+from queue import Queue, Empty
+
+
 
 # QR scanning is handled entirely by JavaScript (jsQR library)
 QR_SCANNING_AVAILABLE = True
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
+
+
 
 # Database configuration - use instance folder for PythonAnywhere compatibility
 from pathlib import Path
@@ -43,8 +54,12 @@ class User(db.Model):
     phone = db.Column(db.String(20), nullable=True)
     barangay_id = db.Column(db.Integer, db.ForeignKey('barangay.id'), nullable=True)  # Barangay assignment for barangay users
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
     last_login = db.Column(db.DateTime, nullable=True)
+    # Latest known device location for collectors (nullable)
+    last_latitude = db.Column(db.Float, nullable=True)
+    last_longitude = db.Column(db.Float, nullable=True)
+    last_seen = db.Column(db.DateTime, nullable=True)
     
     barangay = db.relationship('Barangay', backref=db.backref('users', lazy=True))
     
@@ -73,7 +88,7 @@ class Barangay(db.Model):
     population = db.Column(db.Integer, nullable=True)
     area_km2 = db.Column(db.Float, nullable=True)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
 
 # Authentication decorators
 def login_required(f):
@@ -143,6 +158,153 @@ def get_current_user():
         return db.session.get(User, session['user_id'])
     return None
 
+# In-memory SSE subscribers (simple pub/sub for live updates)
+_sse_subscribers = []
+
+def notify_waste_location(data: dict):
+    """Notify all SSE subscribers with the given data payload, but only for items inside the configured coverage area."""
+    try:
+        barangay_id = data.get('barangay_id')
+        # If barangay_id is missing, try to derive it from item_id
+        if barangay_id is None and data.get('item_id'):
+            wi = WasteItem.query.filter_by(item_id=data.get('item_id')).first()
+            barangay_id = wi.barangay_id if wi else None
+        # Don't notify about items outside coverage
+        if not is_barangay_in_coverage(barangay_id=barangay_id):
+            return
+    except Exception:
+        # On error, avoid broadcasting unknown items
+        return
+
+    for q in list(_sse_subscribers):
+        try:
+            q.put_nowait(data)
+        except Exception:
+            # ignore failures - subscriber may have disconnected
+            pass
+
+
+def notify_collector_location(data: dict):
+    """Notify SSE subscribers about collector location updates for the barangay the collector belongs to."""
+    try:
+        barangay_id = data.get('barangay_id')
+        if barangay_id is None:
+            return
+        # Only notify if barangay is in coverage
+        if not is_barangay_in_coverage(barangay_id=barangay_id):
+            return
+    except Exception:
+        return
+
+    payload = data.copy()
+    payload['type'] = 'collector_location'
+
+    for q in list(_sse_subscribers):
+        try:
+            q.put_nowait(payload)
+        except Exception:
+            pass
+
+@app.route('/stream/waste_locations')
+@login_required
+def stream_waste_locations():
+    """Server-Sent Events stream for real-time waste location updates (waste items and collector locations)."""
+    def gen():
+        q = Queue()
+        _sse_subscribers.append(q)
+        try:
+            while True:
+                try:
+                    payload = q.get(timeout=15)
+                    yield f"data: {json.dumps(payload)}\n\n"
+                except Empty:
+                    # keep-alive
+                    yield ":\n\n"
+        finally:
+            try:
+                _sse_subscribers.remove(q)
+            except ValueError:
+                pass
+
+    return Response(stream_with_context(gen()), mimetype='text/event-stream')
+
+
+@app.route('/api_collectors')
+@login_required
+def api_collectors():
+    """Return collectors and their last known locations for a barangay.
+
+    Query params: barangay_id (optional). If omitted, uses the current user's barangay.
+    Access control: barangay users can only request their own barangay; admins can request any.
+    """
+    user = get_current_user()
+    barangay_id = request.args.get('barangay_id', type=int)
+    if barangay_id is None:
+        barangay_id = user.barangay_id
+
+    if not user:
+        return jsonify(success=False, error='Not authenticated'), 401
+
+    if not user.is_admin() and user.barangay_id != barangay_id:
+        return jsonify(success=False, error='Forbidden'), 403
+
+    collectors = User.query.filter_by(role='collector', barangay_id=barangay_id).all()
+    out = []
+    for c in collectors:
+        out.append({
+            'id': c.id,
+            'username': c.username,
+            'full_name': c.full_name,
+            'latitude': c.last_latitude,
+            'longitude': c.last_longitude,
+            'last_seen': c.last_seen.isoformat() if c.last_seen else None
+        })
+
+    return jsonify(success=True, collectors=out)
+
+
+@app.route('/collector_location', methods=['POST'])
+@collector_required
+def collector_location():
+    """Endpoint for collectors to POST their current device location.
+
+    Accepts JSON: { device_latitude, device_longitude }
+    Updates the current user's last_latitude, last_longitude, last_seen and broadcasts via SSE.
+    """
+    data = request.get_json(force=True, silent=True) or {}
+    device_lat = data.get('device_latitude') or data.get('latitude')
+    device_lng = data.get('device_longitude') or data.get('longitude')
+
+    lat_f, lng_f, issue = normalize_coords(device_lat, device_lng)
+    if lat_f is None and lng_f is None:
+        return jsonify(success=False, error='Invalid coordinates'), 400
+
+    user = get_current_user()
+    if not user:
+        return jsonify(success=False, error='Not authenticated'), 401
+
+    user.last_latitude = lat_f
+    user.last_longitude = lng_f
+    user.last_seen = utcnow()
+    db.session.add(user)
+    db.session.commit()
+
+    # Broadcast to SSE subscribers
+    try:
+        notify_collector_location({
+            'user_id': user.id,
+            'username': user.username,
+            'full_name': user.full_name,
+            'barangay_id': user.barangay_id,
+            'latitude': lat_f,
+            'longitude': lng_f,
+            'last_seen': user.last_seen.isoformat()
+        })
+    except Exception:
+        pass
+
+    return jsonify(success=True)
+
 class CollectionRoute(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     route_name = db.Column(db.String(100), nullable=False)
@@ -150,7 +312,7 @@ class CollectionRoute(db.Model):
     collection_day = db.Column(db.String(20), nullable=False)  # Monday, Tuesday, etc.
     collection_time = db.Column(db.String(10), nullable=False)  # 08:00, 14:00, etc.
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
     
     barangay = db.relationship('Barangay', backref=db.backref('collection_routes', lazy=True))
 
@@ -168,8 +330,8 @@ class WasteItem(db.Model):
     address = db.Column(db.String(200), nullable=True)
     contact_person = db.Column(db.String(100), nullable=True)
     contact_number = db.Column(db.String(20), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
     qr_code_data = db.Column(db.Text, nullable=True)
     client_confirmed = db.Column(db.Boolean, default=False, nullable=False)  # Client confirmation for collection
     client_confirmed_at = db.Column(db.DateTime, nullable=True)  # When client confirmed
@@ -187,11 +349,106 @@ class WasteTracking(db.Model):
     waste_item_id = db.Column(db.Integer, db.ForeignKey('waste_item.id'), nullable=False)
     status = db.Column(db.String(50), nullable=False)
     location = db.Column(db.String(100), nullable=True)
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
+    updated_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     notes = db.Column(db.Text, nullable=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=utcnow)
     
     waste_item = db.relationship('WasteItem', backref=db.backref('tracking_records', lazy=True))
+    updater = db.relationship('User', foreign_keys=[updated_by], backref=db.backref('updates', lazy=True))
 
+
+# Coverage helper functions - restrict tracking/notifications to a specific municipality/province
+COVERAGE_MUNICIPALITY = 'Nabua'
+COVERAGE_PROVINCE = 'Camarines Sur'
+
+# Geographic bounds for the coverage area (approx bounding box for Nabua municipality)
+# Format: [[southWestLat, southWestLng], [northEastLat, northEastLng]]
+NABUA_BOUNDS = [[13.15, 122.95], [13.55, 123.45]]
+NABUA_CENTER = [13.35, 123.2]  # conservative center point for Nabua maps
+
+def is_barangay_in_coverage(barangay_id: int = None, barangay: 'Barangay' = None):
+    """Return True if the given barangay (or barangay_id) is within the configured coverage area."""
+    try:
+        if barangay is None and barangay_id is None:
+            return False
+        if barangay is None:
+            barangay = db.session.get(Barangay, barangay_id)
+        if not barangay:
+            return False
+        return (barangay.municipality == COVERAGE_MUNICIPALITY and barangay.province == COVERAGE_PROVINCE)
+    except Exception:
+        return False
+
+
+def normalize_coords(lat, lng):
+    """Parse and normalize coordinates.
+
+    Accepts strings or numbers. Returns a tuple (latitude, longitude, issue)
+    where `issue` is None on success or one of: 'swapped', 'dropped', 'partial'.
+
+    Behavior:
+    - If both coordinates are present and in valid ranges, return them with issue=None.
+    - If the pair looks swapped (latitude outside -90..90 and longitude inside -90..90),
+      swap them and return with issue='swapped' if the swapped values are valid.
+    - If invalid after normalization, return (None, None, 'dropped').
+    - If only one value is present and valid, return it with issue='partial'.
+    """
+    def to_float(v):
+        try:
+            if v is None or v == '':
+                return None
+            return float(v)
+        except (TypeError, ValueError):
+            return None
+
+    lat_f = to_float(lat)
+    lng_f = to_float(lng)
+
+    # Both missing
+    if lat_f is None and lng_f is None:
+        return None, None, None
+
+    # Both present
+    if lat_f is not None and lng_f is not None:
+        if -90 <= lat_f <= 90 and -180 <= lng_f <= 180:
+            return lat_f, lng_f, None
+        # Detect swapped coordinates: latitude looks like a longitude
+        if abs(lat_f) > 90 and abs(lat_f) <= 180 and abs(lng_f) <= 90:
+            swapped_lat, swapped_lng = float(lng_f), float(lat_f)
+            if -90 <= swapped_lat <= 90 and -180 <= swapped_lng <= 180:
+                app.logger.warning("Swapping lat/lng values: %s,%s -> %s,%s", lat, lng, swapped_lat, swapped_lng)
+                return swapped_lat, swapped_lng, 'swapped'
+        app.logger.warning("Dropping invalid coords: %s,%s", lat, lng)
+        return None, None, 'dropped'
+
+    # Only latitude present
+    if lat_f is not None and lng_f is None:
+        if -90 <= lat_f <= 90:
+            return lat_f, None, 'partial'
+        app.logger.warning("Dropping invalid latitude-only value: %s", lat)
+        return None, None, 'dropped'
+
+    # Only longitude present
+    if lng_f is not None and lat_f is None:
+        if -180 <= lng_f <= 180:
+            return None, lng_f, 'partial'
+        app.logger.warning("Dropping invalid longitude-only value: %s", lng)
+        return None, None, 'dropped'
+        return None, None
+
+    # Only latitude present
+    if lat_f is not None:
+        if -90 <= lat_f <= 90:
+            return lat_f, None
+        return None, None
+
+    # Only longitude present
+    if lng_f is not None:
+        if -180 <= lng_f <= 180:
+            return None, lng_f
+        return None, None
 # API Functions
 def sync_barangays():
     """Sync barangays for Nabua only"""
@@ -213,6 +470,9 @@ def sync_barangays():
     print(f"Barangay initialization complete: {final_count} barangays loaded")
     return True
 
+# Routes and APIs for location tracking
+
+
 # Routes
 # Authentication routes
 @app.route('/login', methods=['GET', 'POST'])
@@ -226,7 +486,7 @@ def login():
             session['user_id'] = user.id
             session['username'] = user.username
             session['role'] = user.role
-            user.last_login = datetime.utcnow()
+            user.last_login = utcnow()
             db.session.commit()
             
             flash(f'Welcome back, {user.full_name}!', 'success')
@@ -400,7 +660,7 @@ def add_waste():
         item_id = f"WM{datetime.now().strftime('%Y%m%d%H%M%S')}"
         
         # Get current time for timestamps
-        current_time = datetime.utcnow()
+        current_time = utcnow()
         
         # Generate item name based on waste type
         waste_type_names = {
@@ -522,7 +782,7 @@ def edit_waste(item_id):
         waste_item.address = address
         waste_item.contact_person = contact_person
         waste_item.contact_number = contact_number
-        waste_item.updated_at = datetime.utcnow()
+        waste_item.updated_at = utcnow()
         
         # Update sorting status
         old_is_sorted = waste_item.is_sorted
@@ -538,12 +798,12 @@ def edit_waste(item_id):
             # If newly marked as sorted and was not sorted before, update status
             if waste_item.status == 'not_collected':
                 waste_item.status = 'pending_collection'
-            waste_item.sorted_at = datetime.utcnow()
+            waste_item.sorted_at = utcnow()
             waste_item.sorted_by = current_user_id
         elif is_sorted and old_is_sorted:
             # If already sorted, keep sorted_at and sorted_by
             if not waste_item.sorted_at:
-                waste_item.sorted_at = datetime.utcnow()
+                waste_item.sorted_at = utcnow()
             if not waste_item.sorted_by:
                 waste_item.sorted_by = current_user_id
         
@@ -695,39 +955,255 @@ def update_status(item_id):
     
     location = request.form.get('location', waste_item.address or '')
     notes = request.form.get('notes', '')
-    
+
+    # Prefer explicit device-provided coordinates (device_latitude/device_longitude)
+    device_lat = request.form.get('device_latitude') or request.form.get('latitude')
+    device_lng = request.form.get('device_longitude') or request.form.get('longitude')
+
+    # Normalize coordinates (parsing, validation, swap detection)
+    lat_f, lng_f, coord_issue = normalize_coords(device_lat, device_lng)
+
+    # If we received valid coordinates but no explicit location text,
+    # auto-fill the human-readable location from the coordinates so that
+    # barangay users and collectors see that the location has changed.
+    if (lat_f is not None and lng_f is not None) and (not location or not location.strip()):
+        location = f"Lat: {lat_f:.5f}, Lng: {lng_f:.5f}"
+
     # Update waste item status
     waste_item.status = new_status
-    waste_item.updated_at = datetime.utcnow()
+    waste_item.updated_at = utcnow()
     
     # Update address if location is provided and different
     if location and location != waste_item.address:
         waste_item.address = location
-    
-    # Add tracking record
+
+    note_msg = notes or f'Status updated to {new_status.replace("_", " ").title()}'
+    if coord_issue:
+        note_msg = f"{note_msg} [COORD_ISSUE: {coord_issue}]"
+
     tracking = WasteTracking(
         waste_item_id=waste_item.id,
         status=new_status,
         location=location,
-        notes=notes or f'Status updated to {new_status.replace("_", " ").title()}'
+        latitude=lat_f,
+        longitude=lng_f,
+        updated_by=get_current_user().id if get_current_user() else None,
+        notes=note_msg
     )
     
     db.session.add(tracking)
     db.session.commit()
     
-    # Return JSON for AJAX requests, redirect for form submissions
+    # Notify SSE subscribers for any status updates with coordinates
+    try:
+        payload = {
+            'item_id': waste_item.item_id,
+            'item_name': waste_item.item_name,
+            'status': tracking.status,
+            'latitude': tracking.latitude,
+            'longitude': tracking.longitude,
+            'timestamp': tracking.timestamp.isoformat(),
+            'collector_name': tracking.updater.full_name if tracking.updater else None,
+            'barangay_id': waste_item.barangay_id
+        }
+        notify_waste_location(payload)
+    except Exception:
+        pass
+
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
-        return jsonify({
+        resp = {
             'success': True,
             'message': 'Status updated successfully!',
             'item': {
                 'item_id': waste_item.item_id,
                 'status': waste_item.status
             }
-        })
+        }
+        if coord_issue == 'swapped':
+            resp['warning'] = 'Device coordinates looked swapped and were corrected.'
+        elif coord_issue == 'dropped':
+            resp['warning'] = 'Device coordinates were invalid and were not saved.'
+        elif coord_issue == 'partial':
+            resp['warning'] = 'Partial device coordinates were provided; only one axis was recorded.'
+        return jsonify(resp)
+
+    # Non-AJAX flow: surface a flash message
+    if coord_issue == 'swapped':
+        flash('Device coordinates looked swapped and were corrected.', 'warning')
+    elif coord_issue == 'dropped':
+        flash('Device coordinates were invalid and were not saved.', 'warning')
+    elif coord_issue == 'partial':
+        flash('Partial device coordinates were provided; only one axis was recorded.', 'warning')
+
     
     flash('Status updated successfully!', 'success')
     return redirect(url_for('view_item', item_id=item_id))
+
+# API for collectors to update waste item tracking with precise coordinates
+@app.route('/api/waste/track', methods=['POST'])
+@collector_required
+def api_waste_track():
+    data = request.get_json() or {}
+    item_id = data.get('item_id')
+    status = data.get('status')
+    latitude = data.get('latitude')
+    longitude = data.get('longitude')
+    notes = data.get('notes')
+
+    if not item_id or not status:
+        return jsonify({'status': 'error', 'message': 'item_id and status are required'}), 400
+
+    waste_item = WasteItem.query.filter_by(item_id=item_id).first()
+    if not waste_item:
+        return jsonify({'status': 'error', 'message': 'Item not found'}), 404
+
+    # Must be sorted to update
+    if not waste_item.is_sorted:
+        return jsonify({'status': 'error', 'message': 'Cannot update status. Waste must be sorted.'}), 400
+
+    # Accept either direct coords or explicit device coords; prefer device_* if provided
+    device_lat = data.get('device_latitude') or latitude
+    device_lng = data.get('device_longitude') or longitude
+
+    lat_f, lng_f, coord_issue = normalize_coords(device_lat, device_lng)
+
+    # Update status on waste item
+    waste_item.status = status
+    waste_item.updated_at = utcnow()
+    if 'location' in data and data.get('location'):
+        waste_item.address = data.get('location')
+
+    note_msg = notes or f'Status updated to {status.replace("_"," ").title()} via API'
+    if coord_issue:
+        note_msg = f"{note_msg} [COORD_ISSUE: {coord_issue}]"
+
+    tracking = WasteTracking(
+        waste_item_id=waste_item.id,
+        status=status,
+        location=data.get('location'),
+        latitude=lat_f,
+        longitude=lng_f,
+        updated_by=get_current_user().id if get_current_user() else None,
+        notes=note_msg
+    )
+
+    db.session.add(tracking)
+    db.session.commit()
+
+    # Notify SSE subscribers
+    try:
+        payload = {
+            'item_id': waste_item.item_id,
+            'item_name': waste_item.item_name,
+            'status': tracking.status,
+            'latitude': tracking.latitude,
+            'longitude': tracking.longitude,
+            'timestamp': tracking.timestamp.isoformat(),
+            'collector_name': tracking.updater.full_name if tracking.updater else None,
+            'barangay_id': waste_item.barangay_id
+        }
+        notify_waste_location(payload)
+    except Exception:
+        pass
+
+    resp = {'status': 'ok'}
+    if coord_issue == 'swapped':
+        resp['warning'] = 'Device coordinates looked swapped and were corrected.'
+    elif coord_issue == 'dropped':
+        resp['warning'] = 'Device coordinates were invalid and were not saved.'
+    elif coord_issue == 'partial':
+        resp['warning'] = 'Partial device coordinates were provided; only one axis was recorded.'
+    return jsonify(resp)
+
+# API to fetch latest waste item locations (collected / in_transit)
+@app.route('/api/waste/locations')
+@login_required
+def api_waste_locations():
+    items = []
+    # Include pending/not_collected so barangay users can see items even before pickup,
+    # while still showing collected/in_transit for live tracking.
+    statuses = ['collected', 'in_transit', 'pending_collection', 'not_collected']
+    user = get_current_user()
+
+    # Determine which items to return based on role
+    if user and (user.is_collector() or user.is_admin()):
+        # Limit to barangays within the configured coverage area (e.g., Nabua, Camarines Sur)
+        waste_items = WasteItem.query.join(Barangay).filter(
+            WasteItem.status.in_(statuses),
+            Barangay.municipality == COVERAGE_MUNICIPALITY,
+            Barangay.province == COVERAGE_PROVINCE
+        ).all()
+    elif user and user.is_barangay():
+        # Only items from this user's barangay
+        waste_items = WasteItem.query.filter(WasteItem.status.in_(statuses), WasteItem.barangay_id == user.barangay_id).all()
+    else:
+        return jsonify({'items': []})
+
+    for it in waste_items:
+        # Get the most recent tracking record for this item
+        last = WasteTracking.query.filter_by(waste_item_id=it.id).order_by(WasteTracking.timestamp.desc()).first()
+
+        lat = None
+        lng = None
+        ts = None
+        last_with_coords = None
+
+        if last:
+            ts = last.timestamp
+            lat = last.latitude
+            lng = last.longitude
+
+        # If the latest record has no coordinates (e.g., only a status/note update),
+        # fall back to the latest record that DOES have coordinates so the item
+        # still appears on the map.
+        if (lat is None or lng is None):
+            last_with_coords = WasteTracking.query.filter(
+                WasteTracking.waste_item_id == it.id,
+                WasteTracking.latitude.isnot(None),
+                WasteTracking.longitude.isnot(None)
+            ).order_by(WasteTracking.timestamp.desc()).first()
+            if last_with_coords:
+                lat = last_with_coords.latitude
+                lng = last_with_coords.longitude
+                # Prefer the timestamp of the coordinate-bearing record if we
+                # didn't already have a newer timestamp.
+                if ts is None or last_with_coords.timestamp > ts:
+                    ts = last_with_coords.timestamp
+
+        # If we still don't have valid coordinates, skip this item
+        if lat is None or lng is None:
+            continue
+
+        # Determine collector name from the most relevant tracking record
+        source_record = last if (last and last.latitude is not None and last.longitude is not None) else last_with_coords
+        collector_name = None
+        if source_record and source_record.updater:
+            collector_name = source_record.updater.full_name
+
+        items.append({
+            'item_id': it.item_id,
+            'item_name': it.item_name,
+            'status': it.status,
+            'latitude': lat,
+            'longitude': lng,
+            'timestamp': (ts or it.updated_at).isoformat(),
+            'collector_name': collector_name
+        })
+    return jsonify({'items': items})
+
+@app.route('/tracking')
+@collector_required
+def tracking():
+    """Map view for collectors/admins to see current collected/in-transit items"""
+    return render_template('tracking.html')
+
+@app.route('/my_tracking')
+@barangay_required
+def my_tracking():
+    """Map view for barangay users to see collected items from their barangay"""
+    user = get_current_user()
+    barangay_id = user.barangay_id if user else None
+    return render_template('barangay_tracking.html', barangay_id=barangay_id)
 
 @app.route('/barangays')
 @admin_required
@@ -1078,6 +1554,12 @@ def collection_team():
         WasteItem.status == 'collected',
         WasteItem.client_confirmed == False
     ).order_by(WasteItem.updated_at.desc()).all()
+
+    # Get items already confirmed by barangay representatives (clients)
+    confirmed_collections = WasteItem.query.join(Barangay).filter(
+        WasteItem.status == 'collected',
+        WasteItem.client_confirmed == True
+    ).order_by(WasteItem.updated_at.desc()).all()
     
     # Get all items with status updates made by collection team
     # Collection team can update status to: collected, in_transit, processed, disposed
@@ -1088,11 +1570,14 @@ def collection_team():
     return render_template('collection_team.html', 
                          pending_collections=pending_collections,
                          awaiting_confirmation=awaiting_confirmation,
+                         confirmed_collections=confirmed_collections,
                          status_updates=status_updates)
 
 @app.route('/mark_collected/<item_id>', methods=['POST'])
+@collector_required
 def mark_collected(item_id):
     waste_item = WasteItem.query.filter_by(item_id=item_id).first_or_404()
+    current_user = get_current_user()
     
     # Check if waste is sorted before allowing collection
     if not waste_item.is_sorted:
@@ -1103,22 +1588,63 @@ def mark_collected(item_id):
     if waste_item.status != 'pending_collection':
         flash('This waste item cannot be collected in its current status.', 'warning')
         return redirect(url_for('collection_team'))
-    
+
+    # Try to read optional coordinates from form - prefer device-provided fields
+    device_lat = request.form.get('device_latitude') or request.form.get('latitude')
+    device_lng = request.form.get('device_longitude') or request.form.get('longitude')
+
+    # Normalize coordinates (parsing, validation, swap detection)
+    lat_f, lng_f, coord_issue = normalize_coords(device_lat, device_lng)
+
     waste_item.status = 'collected'
     waste_item.client_confirmed = False  # Require client confirmation
-    waste_item.updated_at = datetime.utcnow()
+    waste_item.updated_at = utcnow()
     
-    # Add tracking record
+    # Add tracking record including coordinates if available
+    notes = f'Collected by collection team ({current_user.full_name if current_user else "collector"}) at {datetime.now().strftime("%Y-%m-%d %H:%M")}. Waiting for client confirmation.'
+    if coord_issue:
+        notes = f"{notes} [COORD_ISSUE: {coord_issue}]"
+
     tracking = WasteTracking(
         waste_item_id=waste_item.id,
         status='collected',
         location=waste_item.address,
-        notes=f'Collected by collection team at {datetime.now().strftime("%Y-%m-%d %H:%M")}. Waiting for client confirmation.'
+        latitude=lat_f,
+        longitude=lng_f,
+        updated_by=current_user.id if current_user else None,
+        notes=notes
     )
+
+    db.session.add(tracking)
+    db.session.commit()
+
+    # Surface user-visible notification when applicable
+    if coord_issue == 'swapped':
+        flash('Device coordinates looked swapped and were corrected.', 'warning')
+    elif coord_issue == 'dropped':
+        flash('Device coordinates were invalid and were not saved.', 'warning')
+    elif coord_issue == 'partial':
+        flash('Partial device coordinates were provided; only one axis was recorded.', 'warning')
     
     db.session.add(tracking)
     db.session.commit()
-    
+
+    # Notify SSE subscribers about this collection (real-time updates)
+    try:
+        payload = {
+            'item_id': waste_item.item_id,
+            'item_name': waste_item.item_name,
+            'status': tracking.status,
+            'latitude': tracking.latitude,
+            'longitude': tracking.longitude,
+            'timestamp': tracking.timestamp.isoformat(),
+            'collector_name': current_user.full_name if current_user else None,
+            'barangay_id': waste_item.barangay_id
+        }
+        notify_waste_location(payload)
+    except Exception:
+        pass
+
     flash('Waste item marked as collected! Waiting for client confirmation.', 'success')
     return redirect(url_for('collection_team'))
 
@@ -1140,9 +1666,9 @@ def mark_sorted(item_id):
     
     # Mark as sorted
     waste_item.is_sorted = True
-    waste_item.sorted_at = datetime.utcnow()
+    waste_item.sorted_at = utcnow()
     waste_item.sorted_by = current_user.id
-    waste_item.updated_at = datetime.utcnow()
+    waste_item.updated_at = utcnow()
     
     # If status was 'not_collected', change it to 'pending_collection' now that it's sorted
     if waste_item.status == 'not_collected':
@@ -1176,7 +1702,7 @@ def mark_unsorted(item_id):
     
     # Automatically update status to not_collected with reason "Unsorted Waste"
     waste_item.status = 'not_collected'
-    waste_item.updated_at = datetime.utcnow()
+    waste_item.updated_at = utcnow()
     
     # Reset client confirmation if it was collected
     if waste_item.client_confirmed:
@@ -1220,8 +1746,8 @@ def confirm_collection(item_id):
     
     # Confirm the collection
     waste_item.client_confirmed = True
-    waste_item.client_confirmed_at = datetime.utcnow()
-    waste_item.updated_at = datetime.utcnow()
+    waste_item.client_confirmed_at = utcnow()
+    waste_item.updated_at = utcnow()
     
     # Add tracking record
     tracking = WasteTracking(
@@ -1354,7 +1880,11 @@ def add_user():
 
 @app.route('/api/items')
 def api_items():
-    items = WasteItem.query.join(Barangay).all()
+    # Return items only for the configured coverage area
+    items = WasteItem.query.join(Barangay).filter(
+        Barangay.municipality == COVERAGE_MUNICIPALITY,
+        Barangay.province == COVERAGE_PROVINCE
+    ).all()
     return jsonify([{
         'id': item.id,
         'item_id': item.item_id,
@@ -1599,12 +2129,52 @@ def initialize_database():
 
 def create_default_users():
     """Create only the main admin account and preserve existing users"""
-    # Count existing users
-    total_users = User.query.count()
+    # Count existing users using a raw SQL count to avoid ORM column-mismatch issues
+    from sqlalchemy import text
+    try:
+        total_users = int(db.session.execute(text('SELECT count(*) FROM user')).scalar() or 0)
+    except Exception as e:
+        # If the user table/schema is missing or otherwise incompatible, attempt to create/update tables
+        print(f"[WARNING] Error counting users (attempting to create/update tables): {e}")
+        db.create_all()
+        try:
+            total_users = int(db.session.execute(text('SELECT count(*) FROM user')).scalar() or 0)
+        except Exception:
+            total_users = 0
     print(f"[INFO] Found {total_users} existing users in the database")
-    
+
+    # Ensure user table has the new columns (best-effort ALTER TABLE for sqlite)
+    from sqlalchemy import inspect
+    try:
+        inspector = inspect(db.engine)
+        if 'user' in inspector.get_table_names():
+            cols = [c['name'] for c in inspector.get_columns('user')]
+            with db.engine.connect() as conn:
+                if 'last_latitude' not in cols:
+                    try:
+                        conn.execute(text('ALTER TABLE user ADD COLUMN last_latitude FLOAT'))
+                    except Exception:
+                        pass
+                if 'last_longitude' not in cols:
+                    try:
+                        conn.execute(text('ALTER TABLE user ADD COLUMN last_longitude FLOAT'))
+                    except Exception:
+                        pass
+                if 'last_seen' not in cols:
+                    try:
+                        conn.execute(text('ALTER TABLE user ADD COLUMN last_seen DATETIME'))
+                    except Exception:
+                        pass
+    except Exception:
+        # If anything fails here, continue - it's best-effort for live systems
+        pass
+
     # Check if admin user already exists
-    admin_user = User.query.filter_by(username='admin').first()
+    try:
+        admin_user = User.query.filter_by(username='admin').first()
+    except Exception:
+        admin_user = None
+
     if not admin_user:
         admin = User(
             username='admin',
@@ -1614,23 +2184,45 @@ def create_default_users():
             role='admin'
         )
         admin.set_password('admin123')
-        db.session.add(admin)
-        print("Admin account created successfully!")
+        try:
+            db.session.add(admin)
+            db.session.commit()
+            print("Admin account created successfully!")
+        except Exception as e:
+            # If insert fails (schema mismatch), rollback and skip
+            db.session.rollback()
+            print(f"[WARNING] Could not create admin account via ORM: {e}")
     else:
         print("Admin account already exists")
-    
+
     # Commit changes
-    db.session.commit()
-    
+    try:
+        db.session.commit()
+    except Exception as e:
+        print(f"[WARNING] Commit failed during default user creation: {e}")
+        db.session.rollback()
+
     # Count users after creation
-    final_user_count = User.query.count()
+    try:
+        final_user_count = int(db.session.execute(text('SELECT count(*) FROM user')).scalar() or 0)
+    except Exception:
+        final_user_count = 0
     print(f"[INFO] Total users in database: {final_user_count}")
-    
-    # List all users for verification
-    all_users = User.query.all()
+
+    # List all users for verification (best-effort)
     print("\n[INFO] Current users in the system:")
-    for user in all_users:
-        print(f"  - {user.username} ({user.role}) - {user.full_name}")
+    try:
+        all_users = User.query.all()
+        for user in all_users:
+            print(f"  - {user.username} ({user.role}) - {user.full_name}")
+    except Exception as e:
+        # Fallback to a raw SQL listing if ORM is incompatible
+        try:
+            rows = db.session.execute(text('SELECT username, role, full_name FROM user')).fetchall()
+            for r in rows:
+                print(f"  - {r[0]} ({r[1]}) - {r[2]}")
+        except Exception:
+            print("  - (Could not list users)")
     
     print("\n" + "="*50)
     print("[SUCCESS] SYSTEM INITIALIZATION COMPLETE")
